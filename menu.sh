@@ -231,23 +231,25 @@ function copiarServidorRemoto()
 function controlarIntentosConexionSSH()
 { echo "en desarrollo"
 }
-function clonarProyectoGitHub() {
-	token="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"
-	# Se construye la URL incluyendo el token.
-	repo_url="https://$token@github.com/apolo176/BashProject.git"
-	read -p "Introduce el directorio destino (ruta absoluta): " destino
-	if [ -d "$destino" ]; then
-		echo "El directorio ya existe, se clonará el repositorio dentro de él."
-	else
-		mkdir -p "$destino"
-	fi
-	git clone "$repo_url" "$destino"
-	if [ $? -eq 0 ]; then
-		echo "Repositorio clonado exitosamente en $destino."
-	else
-		echo "Error al clonar el repositorio. Revisa la URL y los permisos."
-	fi
 
+function clonarProyectoGitHub() {
+    token="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"
+    repo_url="https://$token@github.com/apolo176/BashProject.git"
+    read -p "Introduce el directorio destino (ruta absoluta): " destino
+    if [ -d "$destino/.git" ]; then
+        echo "El directorio ya contiene un repositorio Git. Ejecutando git pull..."
+        cd "$destino"
+        git pull origin main
+    else
+        echo "El directorio no existe o no es un repositorio. Clonando..."
+        mkdir -p "$destino"
+        git clone "$repo_url" "$destino"
+    fi
+    if [ $? -eq 0 ]; then
+        echo "Operación realizada exitosamente en $destino."
+    else
+        echo "Error al realizar la operación. Revisa la URL, los permisos y la configuración."
+    fi
 }
 
 function actualizarProyectoGitHub() {
