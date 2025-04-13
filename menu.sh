@@ -232,6 +232,8 @@ function controlarIntentosConexionSSH()
 { echo "en desarrollo"
 }
 function clonarProyectoGitHub() {
+	token="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"
+	echo token
   repo_url="https://github.com/apolo176/BashProject.git"
   read -p "Introduce el directorio destino (ruta absoluta): " destino
   if [ -d "$destino" ]; then
