@@ -233,37 +233,44 @@ function controlarIntentosConexionSSH()
 }
 function clonarProyectoGitHub() {
 	token="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"
-	echo $token
-	repo_url="https://github.com/apolo176/BashProject.git"
+	# Se construye la URL incluyendo el token.
+	repo_url="https://$token@github.com/apolo176/BashProject.git"
 	read -p "Introduce el directorio destino (ruta absoluta): " destino
 	if [ -d "$destino" ]; then
-	echo "El directorio ya existe, se clonará el repositorio dentro de él."
+		echo "El directorio ya existe, se clonará el repositorio dentro de él."
 	else
-	mkdir -p "$destino"
+		mkdir -p "$destino"
 	fi
 	git clone "$repo_url" "$destino"
 	if [ $? -eq 0 ]; then
-	echo "Repositorio clonado exitosamente en $destino."
+		echo "Repositorio clonado exitosamente en $destino."
 	else
-	echo "Error al clonar el repositorio. Revisa la URL y los permisos."
+		echo "Error al clonar el repositorio. Revisa la URL y los permisos."
 	fi
+
 }
 
 function actualizarProyectoGitHub() {
+	token="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"
 	proyecto="/home/$USER/formulariocitas"
 	if [ ! -d "$proyecto/.git" ]; then
 		echo "La ruta proporcionada no parece ser un repositorio Git."
-	return
+		return
 	fi
 	cd "$proyecto"
+	    
+	# Actualizamos la URL remota para incluir el token, en caso de ser necesario
+	git remote set-url origin https://$token@github.com/apolo176/BashProject.git
 	git add .
 	read -p "Introduce el mensaje del commit: " commit_msg
 	git commit -m "$commit_msg"
-	git push
+	    
+	# Para configurar la rama upstream y hacer el push en la rama main
+	git push -u origin main
 	if [ $? -eq 0 ]; then
-	echo "El repositorio se ha actualizado correctamente."
+		echo "El repositorio se ha actualizado correctamente."
 	else
-	echo "Error al actualizar el repositorio. Revisa tu conexión y credenciales."
+		echo "Error al actualizar el repositorio. Revisa tu conexión y credenciales."
 	fi
 }
 function salirMenu()
