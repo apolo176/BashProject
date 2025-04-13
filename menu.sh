@@ -233,38 +233,38 @@ function controlarIntentosConexionSSH()
 }
 function clonarProyectoGitHub() {
 	token="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"
-	echo token
-  repo_url="https://github.com/apolo176/BashProject.git"
-  read -p "Introduce el directorio destino (ruta absoluta): " destino
-  if [ -d "$destino" ]; then
-    echo "El directorio ya existe, se clonará el repositorio dentro de él."
-  else
-    mkdir -p "$destino"
-  fi
-  git clone "$repo_url" "$destino"
-  if [ $? -eq 0 ]; then
-    echo "Repositorio clonado exitosamente en $destino."
-  else
-    echo "Error al clonar el repositorio. Revisa la URL y los permisos."
-  fi
+	echo $token
+	repo_url="https://github.com/apolo176/BashProject.git"
+	read -p "Introduce el directorio destino (ruta absoluta): " destino
+	if [ -d "$destino" ]; then
+	echo "El directorio ya existe, se clonará el repositorio dentro de él."
+	else
+	mkdir -p "$destino"
+	fi
+	git clone "$repo_url" "$destino"
+	if [ $? -eq 0 ]; then
+	echo "Repositorio clonado exitosamente en $destino."
+	else
+	echo "Error al clonar el repositorio. Revisa la URL y los permisos."
+	fi
 }
 
 function actualizarProyectoGitHub() {
-  read -p "Introduce la ruta del proyecto Git: " proyecto
-  if [ ! -d "$proyecto/.git" ]; then
-    echo "La ruta proporcionada no parece ser un repositorio Git."
-    return
-  fi
-  cd "$proyecto"
-  git add .
-  read -p "Introduce el mensaje del commit: " commit_msg
-  git commit -m "$commit_msg"
-  git push
-  if [ $? -eq 0 ]; then
-    echo "El repositorio se ha actualizado correctamente."
-  else
-    echo "Error al actualizar el repositorio. Revisa tu conexión y credenciales."
-  fi
+	proyecto="/home/$USER/formulariocitas"
+	if [ ! -d "$proyecto/.git" ]; then
+		echo "La ruta proporcionada no parece ser un repositorio Git."
+	return
+	fi
+	cd "$proyecto"
+	git add .
+	read -p "Introduce el mensaje del commit: " commit_msg
+	git commit -m "$commit_msg"
+	git push
+	if [ $? -eq 0 ]; then
+	echo "El repositorio se ha actualizado correctamente."
+	else
+	echo "Error al actualizar el repositorio. Revisa tu conexión y credenciales."
+	fi
 }
 function salirMenu()
 {
