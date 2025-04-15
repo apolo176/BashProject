@@ -18,7 +18,7 @@ def agregar_cita():
         apellido = request.form['apellido']
         telefono = request.form['telefono']
         try:
-            config = { 'user': DB_USER, 'password': DB_PASSWORD, 'host': 'localhost', 'port': '33060', 'database': 'invitados'}
+            config = { 'user': DB_USER if DB_USER is not None else 'lsi', 'password':  DB_PASSWORD if DB_PASSWORD is not None else 'lsi', 'host': '127.0.0.1', 'port': 3306, 'database': 'invitados'}
             connection = mysql.connector.connect(**config)
             cursor = connection.cursor()
             cursor.execute('INSERT INTO clientes (nombre, apellido, telefono) VALUES (%s, %s, %s)', (nombre, apellido, telefono))
