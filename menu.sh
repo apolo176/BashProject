@@ -123,9 +123,10 @@ function arrancarNGINX()
 	sudo systemctl start nginx.service
 }
 
+#todo no reconoce !dpkg
 function testearPuertosNGINX()
 { 
-	if !dpkg -s | grep net-tools;
+	if !dpkg -s | grep net-tools/etc/nginx/conf.d/;
 	then
 		sudo apt install net-tools
 	fi
@@ -137,41 +138,41 @@ function visualizarIndex()
 { 
 	firefox http://localhost
 }
-
+#todo faltan comprobaciones y ademas faltan los sudos
 function personalizarIndex()
 { 
 	sudo > /var/www/html/index.nginx-debian.html
 	sudo mv /var/www/html/index.nginx-debian.html /var/www/html/index.html
-	echo '<!DOCTYPE html>' > /var/www/html/index.html
-	echo '  <html>' >> /var/www/html/index.html
-	echo '  <head>' >> /var/www/html/index.html
-	echo '<title>NOMBRE DEL GRUPO</title>' >> /var/www/html/index.html
-	echo ' </head>' >> /var/www/html/index.html
-	echo ' <body>' >> /var/www/html/index.html
-	echo '<center>' >> /var/www/html/index.html
-	echo '    <h1>NOMBRE DEL GRUPO</h1>' >> /var/www/html/index.html
-	echo '</center>' >> /var/www/html/index.html
-	echo '' >> /var/www/html/index.html
-	echo '<table border="5" bordercolor="red" align="center">' >> /var/www/html/index.html
-	echo '    <tr>' >> /var/www/html/index.html
-	echo '        <th colspan="3">NOMBRE DEL GRUPO</th>' >> /var/www/html/index.html
-	echo '    </tr>' >> /var/www/html/index.html
-	echo '    <tr>' >> /var/www/html/index.html
-	echo '        <th>Nombre</th>' >> /var/www/html/index.html
-	echo '        <th>Apellidos</th>' >> /var/www/html/index.html
-	echo '        <th>Foto</th>' >> /var/www/html/index.html
-	echo '    </tr>' >> /var/www/html/index.html
-	echo '     <tr>' >> /var/www/html/index.html
-	echo '        <td>Kepa</td>' >> /var/www/html/index.html
-	echo '        <td>Bengoetxea Kortazar</td>' >> /var/www/html/index.html
-	echo '        <td border=3 height=100 width=100>Photo1</td>' >> /var/www/html/index.html
-	echo '    </tr>' >> /var/www/html/index.html
-	echo '</table>' >> /var/www/html/index.html
-	echo '<center>' >> /var/www/html/index.html
-	echo '    El cabeza de grupo es Kepa Bengoetxea' >> /var/www/html/index.html
-	echo '</center>' >> /var/www/html/index.html
-	echo '  </body>' >> /var/www/html/index.html
-	echo '  </html>' >> /var/www/html/index.html	
+	sudo echo '<!DOCTYPE html>' > /var/www/html/index.html
+	sudo echo '  <html>' >> /var/www/html/index.html
+	sudo echo '  <head>' >> /var/www/html/index.html
+	sudo echo '<title>NOMBRE DEL GRUPO</title>' >> /var/www/html/index.html
+	sudo echo ' </head>' >> /var/www/html/index.html
+	sudo echo ' <body>' >> /var/www/html/index.html
+	sudo echo '<center>' >> /var/www/html/index.html
+	sudo echo '    <h1>NOMBRE DEL GRUPO</h1>' >> /var/www/html/index.html
+	sudo echo '</center>' >> /var/www/html/index.html
+	sudo echo '' >> /var/www/html/index.html
+	sudo echo '<table border="5" bordercolor="red" align="center">' >> /var/www/html/index.html
+	sudo echo '    <tr>' >> /var/www/html/index.html
+	sudo echo '        <th colspan="3">NOMBRE DEL GRUPO</th>' >> /var/www/html/index.html
+	sudo echo '    </tr>' >> /var/www/html/index.html
+	sudo echo '    <tr>' >> /var/www/html/index.html
+	sudo echo '        <th>Nombre</th>' >> /var/www/html/index.html
+	sudo echo '        <th>Apellidos</th>' >> /var/www/html/index.html
+	sudo echo '        <th>Foto</th>' >> /var/www/html/index.html
+	sudo echo '    </tr>' >> /var/www/html/index.html
+	sudo echo '     <tr>' >> /var/www/html/index.html
+	sudo echo '        <td>Kepa</td>' >> /var/www/html/index.html
+	sudo echo '        <td>Bengoetxea Kortazar</td>' >> /var/www/html/index.html
+	sudo echo '        <td border=3 height=100 width=100>Photo1</td>' >> /var/www/html/index.html
+	sudo echo '    </tr>' >> /var/www/html/index.html
+	sudo echo '</table>' >> /var/www/html/index.html
+	sudo echo '<center>' >> /var/www/html/index.html
+	sudo echo '    El cabeza de grupo es Kepa Bengoetxea' >> /var/www/html/index.html
+	sudo echo '</center>' >> /var/www/html/index.html
+	sudo echo '  </body>' >> /var/www/html/index.html
+	sudo echo '  </html>' >> /var/www/html/index.html	
 }
 
 function instalarGunicorn()
@@ -195,33 +196,108 @@ function configurarGunicorn()
 	firefox localhost:5000
 }
 
+#todo comprobaciones etc...
 function pasarPropiedadyPermisos()
-{ echo "en desarrollo"
+{ 
+	sudo chown -R www-data:www-data /var/www/formulariocitas
+	echo "La propiedad ha sido transferida al <usuario:grupo>: <www-data:www-data>."
 	
 }
 
+#todo comprobaciones etc...
 function crearServicioSystemdFormularioCitas()
-{ echo "en desarrollo"
+{ 
+	echo "Creando servicio systemd para formulario de citas..."
+	cat <<EOF | sudo tee /etc/systemd/system/formulariocitas.service > /dev/null
+	[Unit]
+	Description=Gunicorn instance to serve Flask
+	After=network.target
+
+	[Service]
+	User=www-data
+	Group=www-data
+	WorkingDirectory=/var/www/formulariocitas
+	Environment="PATH=/var/www/formulariocitas/venv/bin"
+	ExecStart=/var/www/formulariocitas/venv/bin/gunicorn --bind 127.0.0.1:5000 wsgi:app
+	Restart=always
+
+	[Install]
+	WantedBy=multi-user.target
+EOF
+	sudo systemctl daemon-reload
+	echo "Servicio creado en /etc/systemd/system/formulariocitas.service "
+	sudo systemctl enable formulariocitas
+	sudo systemctl start formulariocitas
+	echo "Verificando estado del servicio..."
+	sleep 1  # Pequeña pausa para dar tiempo al servicio a arrancar
+
+	if systemctl is-active --quiet formulariocitas; then
+        	echo "✅ El servicio 'formulariocitas' se ha creado y está activo."
+	else
+		echo "❌ El servicio 'formulariocitas' no está activo. Revisa los logs con:"
+		echo "   sudo journalctl -u formulariocitas -e"
+	fi
+
 }
 
 function configurarNginxProxyInverso()
-{ echo "en desarrollo"
+{ 
+	local conf_path="/etc/nginx/conf.d/formulariocitas.conf"
+	if [ -f "$conf_path" ]; then
+		echo "⚠️  El archivo $conf_path ya existe. No se ha hecho ninguna modificación."
+	else
+		echo "Creando configuración de Nginx para formulario de citas..."
+		sudo tee "$conf_path" > /dev/null <<EOF
+		server {
+		    listen 3128;
+		    server_name localhost;
+		    location / {
+			include proxy_params;
+			proxy_pass  http://127.0.0.1:5000;
+		    }
+		}
+EOF
+		echo "✅ Configuración creada en $conf_path"
+		echo "Recargando Nginx..."
+		sudo nginx -t && sudo systemctl reload nginx
+	fi
+	echo "🔎 Comprobando sintaxis de la configuración de Nginx..."
+	if sudo nginx -t; then
+		echo "✅ Sintaxis válida. Puede recargar Nginx con la opción 20"
+
+	else
+		echo "❌ Error en la configuración de Nginx. No se ha recargado el servicio."
+		echo "   Revisa los mensajes anteriores para más detalles."
+
+
+	fi
+
 }
 
 function cargarFicherosConfiguracionNginx()
-{ echo "en desarrollo"
+{
+	sudo systemctl reload nginx
+	echo "⚙️ Nginx recargado correctamente con la nueva configuración."
+
 }
 
 function rearrancarNginx()
-{ echo "en desarrollo"
+{ 
+	sudo systemctl restart nginx
+	echo "🚀 Nginx reiniciado correctamente."
 }
 
 function testearVirtualHost()
-{ echo "en desarrollo"
+{ 
+	echo "🔎 Vamos a testear el servicio"
+	echo "⚠️ En unos segundos se te redigira al navegador"
+	sleep 3
+ 	firefox http://127.0.0.1:8080
 }
 
 function verNginxLogs()
-{ echo "en desarrollo"
+{ 
+	tail -10 /var/log/nginx/error.log
 }
 
 function copiarServidorRemoto()
@@ -254,19 +330,36 @@ function clonarProyectoGitHub() {
 
 function actualizarProyectoGitHub() {
 	token="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"
+	echo "Introduce esto cuando pida la contraseña $token"
 	proyecto="/home/$USER/formulariocitas"
+
+	# Comprobamos si es un repositorio Git
 	if [ ! -d "$proyecto/.git" ]; then
 		echo "La ruta proporcionada no parece ser un repositorio Git."
 		return
 	fi
+
 	cd "$proyecto"
-	    
-	# Actualizamos la URL remota para incluir el token, en caso de ser necesario
-	git remote set-url origin https://$token@github.com/apolo176/BashProject.git
+
+	# Preguntar al usuario por su nombre y correo
+	#echo "Por favor, introduce tu nombre para el commit:"
+	#read -p "Nombre: " nombre
+	#echo "Por favor, introduce tu correo para el commit:"
+	#read -p "Correo: " correo
+
+	# Configurar la identidad en Git para este repositorio
+	#git config user.name "$nombre"
+	#git config user.email "$correo"
+	#git config --global credential.helper store
+	#echo "https://$token@github.com" > ~/.git-credentials
+	# Actualizamos la URL remota para incluir el token
+	git remote set-url origin https://github.com/apolo176/BashProject.git
+    
+	# Hacer commit y push
 	git add .
 	read -p "Introduce el mensaje del commit: " commit_msg
 	git commit -m "$commit_msg"
-	    
+    	echo "Intentando subir tus cambios..."
 	# Para configurar la rama upstream y hacer el push en la rama main
 	git push -u origin main
 	if [ $? -eq 0 ]; then
@@ -338,7 +431,6 @@ do
 	20) cargarFicherosConfiguracionNginx;;
 	21) rearrancarNginx;;
 	22) testearVirtualHost;;
-	23) testearVirtualHost;;
 	24) copiarServidorRemoto;;
 	25) controlarIntentosConexionSSH;;
    	26) salirMenu;;
