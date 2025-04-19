@@ -353,7 +353,7 @@ function actualizarProyectoGitHub() {
 	#git config --global credential.helper store
 	#echo "https://$token@github.com" > ~/.git-credentials
 	# Actualizamos la URL remota para incluir el token
-	git remote set-url origin https://github.com/apolo176/BashProject.git
+	git remote set-url origin git@github-class:apolo176/BashProject.git
     
 	# Hacer commit y push
 	git add .
