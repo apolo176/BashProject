@@ -316,7 +316,24 @@ function copiarServidorRemoto()
 }
 
 function controlarIntentosConexionSSH()
-{ echo "en desarrollo"
+{
+	echo "Analizando logs de intentos de conexión SSH..."
+
+	# Listar todos los ficheros auth.log* (incluyendo los comprimidos)
+	LOGS=$(ls /var/log/auth.log* 2>/dev/null)
+
+	for LOG in $LOGS; do
+	if [[ $LOG == *.gz ]]; then
+	    zcat "$LOG"
+	else
+	    cat "$LOG"
+	fi
+	done | grep "sshd" | grep -E "Failed password|Accepted password" | while read -r LINE; do
+	DATE=$(echo "$LINE" | awk '{print $1, $2, $3}')
+	STATUS=$(echo "$LINE" | grep -q "Failed password" && echo "fail" || echo "accept")
+	USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
+	echo "\"Status: [$STATUS] Account name: $USER Date: $DATE\""
+	done
 }
 
 function clonarProyectoGitHub() {
