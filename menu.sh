@@ -302,7 +302,17 @@ function verNginxLogs()
 }
 
 function copiarServidorRemoto()
-{ echo "en desarrollo"
+{ 
+	sudo apt install openssh-service
+	sudo systemctl enable ssh
+	sudo systemctl start ssh
+	echo "Introduce la IP del servidor remoto"
+	read ip
+	scp menu.sh &USER@&ip:/home/$USER/formulariocitas
+	scp formulariocitas.tar.gz $USER@$ip:/home/$USER/formulariocitas
+	ssh $USER@$ip
+	bash -x menu.sh
+
 }
 
 function controlarIntentosConexionSSH()
