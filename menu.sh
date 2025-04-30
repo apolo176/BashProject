@@ -459,6 +459,7 @@ do
 	20) cargarFicherosConfiguracionNginx;;
 	21) rearrancarNginx;;
 	22) testearVirtualHost;;
+ 	23) verNginxLogs;;
 	24) copiarServidorRemoto;;
 	25) controlarIntentosConexionSSH;;
    	26) salirMenu;;
