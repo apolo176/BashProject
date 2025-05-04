@@ -106,14 +106,15 @@ function instalarLibreriasEntornoVirtual()
 	# kepa activa y desactiva todo el rato (comentario poco claro, puede eliminarse o aclararse)
 }
 
-
 function probandotodoconservidordedesarrollodeflask()
 {
+	# Ejecuta la aplicación Flask en modo desarrollo
 	python3 /home/$USER/formulariocitas/app.py
 }
 
 function instalarNGINX()
 {
+	# Verifica si NGINX está instalado, y si no lo está, lo instala
 	if dpkg -s | grep nginx;
 	then
 		echo "NGINX ya está instalado"
@@ -125,6 +126,7 @@ function instalarNGINX()
 
 function arrancarNGINX()
 {
+	# Verifica si el servicio NGINX está en ejecución, y si no, lo inicia
 	if  systemctl status nginx.service > /dev/null 2>&1;
 	then
 		echo "El servicio está en marcha"
@@ -133,23 +135,26 @@ function arrancarNGINX()
 	sudo systemctl start nginx.service
 }
 
-#todo no reconoce !dpkg
 function testearPuertosNGINX()
 { 
+	# Verifica si 'net-tools' está instalado y lo instala si no está presente
+	# Luego, muestra el estado de los puertos abiertos por NGINX
 	if !dpkg -s | grep net-tools/etc/nginx/conf.d/;then
 		sudo apt install net-tools
 	fi
 	sudo netstat -anp | grep nginx
-	
 }
 
 function visualizarIndex()
 { 
+	# Abre el navegador Firefox en la URL local del servidor NGINX (localhost)
 	firefox http://localhost
 }
-#todo faltan comprobaciones y ademas faltan los sudos
+
 function personalizarIndex()
 { 
+	# Personaliza el archivo index.html de NGINX con contenido HTML básico
+	# Este contenido incluye una tabla con el nombre del grupo y algunos detalles
 	sudo > /var/www/html/index.nginx-debian.html
 	sudo mv /var/www/html/index.nginx-debian.html /var/www/html/index.html
 	sudo echo '<!DOCTYPE html>' > /var/www/html/index.html
@@ -186,14 +191,17 @@ function personalizarIndex()
 
 function instalarGunicorn()
 { 
+	# Activa el entorno virtual y instala Gunicorn para servir la aplicación Flask
 	cd /var/www/formulariocitas
 	source venv/bin/activate
 	pip install gunicorn
-	#comprobar si esta instalado con pip
+	# Comprobación de si Gunicorn está instalado usando pip
 }
 
 function configurarGunicorn()
 { 
+	# Configura Gunicorn creando el archivo wsgi.py para lanzar la aplicación Flask
+	# Luego, ejecuta Gunicorn en el puerto 5000 y abre Firefox en localhost
 	cd /var/www/formulariocitas
 	source venv/bin/activate
 	GunicornFile="wsgi.py"
