@@ -2,30 +2,30 @@
 #Prueba
 function empaquetaycomprimeFicherosProyecto()
 {
+	# Navega al directorio del proyecto y crea un archivo tar.gz con los ficheros esenciales
 	cd /home/$USER/formulariocitas
 	tar cvzf  /home/$USER/formulariocitas.tar.gz app.py script.sql  .env requirements.txt templates/*
 }
+
 function eliminarMySQL()
 {
-	#Para el servicio
+	# Detiene el servicio MySQL
 	sudo systemctl stop mysql.service
-	#Elimina los paquetes +ficheros de configuración + datos
+	# Elimina completamente MySQL y sus configuraciones
 	sudo apt purge mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-*
-	#servidor MySQL se desinstale completamente sin dejar archivos de residuos.
+	# Elimina dependencias no necesarias
 	sudo apt autoremove
-	#Limpia la cache
+	# Limpia la caché de paquetes
 	sudo apt autoclean
-	#Para cerciorarnos de que queda todo limpio:
-	#Eliminar los directorios de datos de MySQL:
+	# Elimina los datos, configuraciones y logs de MySQL para una limpieza completa
 	sudo rm -rf /var/lib/mysql
-	#Eliminar los archivos de configuración de MySQL:
 	sudo rm -rf /etc/mysql/
-	#Eliminar los logs
 	sudo rm -rf /var/log/mysql
 }
 
 function crearNuevaUbicacion()
 {
+	# Crea una nueva ubicación para el proyecto, borrando la existente si ya está
 	if [ -d /var/www/formulariocitas ]
 	then
 		echo -e "Borrando el contenido del direcctorio...\n"
@@ -35,15 +35,18 @@ function crearNuevaUbicacion()
 	sudo mkdir -p /var/www/formulariocitas
 	echo "Cambiando permisos del directorio..."
 	sudo chown -R $USER:$USER /var/www/formulariocitas
-	echo ""
 	read -p "PULSA ENTER PARA CONTINUAR..."
 }
+
 function copiarFicherosProyectoNuevaUbicacion()
 {
+	# Extrae los ficheros del proyecto en la nueva ubicación
 	tar -xf /home/$USER/formulariocitas.tar.gz -C /var/www/formulariocitas
 }
+
 function instalarMySQL()
 {
+	# Verifica si MySQL está instalado y lo inicia si no está corriendo; si no está instalado, lo instala
 	if dpkg -l | grep -q mysql-server;
 	then
 		echo "MySQL ya está instalado"
@@ -60,8 +63,10 @@ function instalarMySQL()
 		sudo systemctl start mysql.service
 	fi
 }
+
 function crearusuariobasesdedatos()
 {
+	# Crea un script SQL para crear el usuario 'lsi' con permisos amplios y lo ejecuta en MySQL
 	sqlScript="crear_usuario.sql"
 	touch "/home/$USER/formulariocitas/$sqlScript"
 	echo "CREATE USER 'lsi'@'localhost' IDENTIFIED BY 'lsi';" >> "$sqlScript"
@@ -72,29 +77,33 @@ function crearusuariobasesdedatos()
   	sudo mysql < /home/$USER/formulariocitas/crear_usuario.sql 
   	return
 }
+
 function crearbasededatos()
 {
+	# Ejecuta un script SQL con la cuenta del usuario 'lsi' para crear y configurar la base de datos
 	mysql -u lsi -p < /home/$USER/formulariocitas/script.sql 
 	return
 }
+
 function ejecutarEntornoVirtual()
 {
+	# Instala dependencias necesarias y crea un entorno virtual Python en el proyecto
 	sudo apt update
 	sudo apt -y upgrade
 	sudo apt install -y python3-venv python3-dev build-essential libssl-dev libffi-dev python3-setuptools python3-pip
 	cd /var/www/formulariocitas
 	python3 -m venv venv
 	source venv/bin/activate
-
 }
 
 function instalarLibreriasEntornoVirtual()
 {
+	# Activa el entorno virtual e instala las librerías requeridas del proyecto
 	cd /var/www/formulariocitas
 	source venv/bin/activate
 	python -m pip install --upgrade pip
 	pip install -r requirements.txt
-	#kepa activa y desactiva todo el rato
+	# kepa activa y desactiva todo el rato (comentario poco claro, puede eliminarse o aclararse)
 }
 
 
