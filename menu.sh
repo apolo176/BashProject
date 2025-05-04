@@ -512,6 +512,3 @@ do
     	esac
 done
 exit 0
-
-
-echo "hola kurt"
