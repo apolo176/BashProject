@@ -316,40 +316,49 @@ function testearVirtualHost()
 	sleep 3
  	firefox http://127.0.0.1:8080
 }
-
 function verNginxLogs()
 { 
+	# Muestra las últimas 10 líneas del archivo de errores de NGINX
 	tail -10 /var/log/nginx/error.log
 }
 
 function copiarServidorRemoto()
 { 
+	# Instala y habilita el servicio SSH para permitir conexiones remotas
 	sudo apt install openssh-service
 	sudo systemctl enable ssh
 	sudo systemctl start ssh
+
+	# Solicita la IP del servidor remoto
 	echo "Introduce la IP del servidor remoto"
 	read ip
-	scp menu.sh &USER@&ip:/home/$USER/formulariocitas
+
+	# Copia los archivos necesarios al servidor remoto usando scp
+	# ⚠️ Las variables &USER y &ip deberían corregirse a $USER y $ip
+	scp menu.sh $USER@$ip:/home/$USER/formulariocitas
 	scp formulariocitas.tar.gz $USER@$ip:/home/$USER/formulariocitas
+
+	# Conecta al servidor remoto por SSH y ejecuta el script
 	ssh $USER@$ip
 	bash -x menu.sh
-
 }
 
 function controlarIntentosConexionSSH()
 {
+	# Analiza los logs de autenticación para detectar intentos de conexión SSH exitosos o fallidos
 	echo "Analizando logs de intentos de conexión SSH..."
 
-	# Listar todos los ficheros auth.log* (incluyendo los comprimidos)
+	# Lista los archivos auth.log, incluyendo comprimidos
 	LOGS=$(ls /var/log/auth.log* 2>/dev/null)
 
 	for LOG in $LOGS; do
-	if [[ $LOG == *.gz ]]; then
-	    zcat "$LOG"
-	else
-	    cat "$LOG"
-	fi
+		if [[ $LOG == *.gz ]]; then
+			zcat "$LOG"
+		else
+			cat "$LOG"
+		fi
 	done | grep "sshd" | grep -E "Failed password|Accepted password" | while read -r LINE; do
+		# Extrae fecha, estado (fail/accept) y nombre de usuario del intento de conexión
 		DATE=$(echo "$LINE" | awk '{print $1, $2, $3}')
 		STATUS=$(echo "$LINE" | grep -q "Failed password" && echo "fail" || echo "accept")
 		USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
@@ -358,31 +367,41 @@ function controlarIntentosConexionSSH()
 }
 
 function clonarProyectoGitHub() {
-	token="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"
+	# Clona un repositorio privado desde GitHub usando un token de acceso personal (PAT)
+	token="github_pat_..."
 	repo_url="https://$token@github.com/apolo176/BashProject.git"
+
+	# Solicita la ruta de destino
 	read -p "Introduce el directorio destino (ruta absoluta): " destino
+
 	if [ -d "$destino/.git" ]; then
-        	echo "El directorio ya contiene un repositorio Git. Ejecutando git pull..."
+		# Si ya es un repositorio, hace pull
+		echo "El directorio ya contiene un repositorio Git. Ejecutando git pull..."
 		cd "$destino"
-        	git pull origin main
-    	else
-        	echo "El directorio no existe o no es un repositorio. Clonando..."
-        	mkdir -p "$destino"
-        	git clone "$repo_url" "$destino"
-    	fi
-    	if [ $? -eq 0 ]; then
-        	echo "Operación realizada exitosamente en $destino."
-    	else
-        	echo "Error al realizar la operación. Revisa la URL, los permisos y la configuración."
-    	fi
+		git pull origin main
+	else
+		# Si no lo es, lo clona desde cero
+		echo "El directorio no existe o no es un repositorio. Clonando..."
+		mkdir -p "$destino"
+		git clone "$repo_url" "$destino"
+	fi
+
+	# Muestra resultado final
+	if [ $? -eq 0 ]; then
+		echo "Operación realizada exitosamente en $destino."
+	else
+		echo "Error al realizar la operación. Revisa la URL, los permisos y la configuración."
+	fi
 }
 
 function actualizarProyectoGitHub() {
-	token="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"
+	# Actualiza el repositorio subiendo cambios a GitHub
+	token="github_pat_..."
 	echo "Introduce esto cuando pida la contraseña $token"
+
 	proyecto="/home/$USER/formulariocitas"
 
-	# Comprobamos si es un repositorio Git
+	# Verifica si es un repositorio Git válido
 	if [ ! -d "$proyecto/.git" ]; then
 		echo "La ruta proporcionada no parece ser un repositorio Git."
 		return
@@ -390,27 +409,19 @@ function actualizarProyectoGitHub() {
 
 	cd "$proyecto"
 
-	# Preguntar al usuario por su nombre y correo
-	#echo "Por favor, introduce tu nombre para el commit:"
-	#read -p "Nombre: " nombre
-	#echo "Por favor, introduce tu correo para el commit:"
-	#read -p "Correo: " correo
-
-	# Configurar la identidad en Git para este repositorio
-	#git config user.name "$nombre"
-	#git config user.email "$correo"
-	#git config --global credential.helper store
-	#echo "https://$token@github.com" > ~/.git-credentials
-	# Actualizamos la URL remota para incluir el token
+	# Configura el origen del repositorio para usar SSH (se espera que tengas una clave configurada)
 	git remote set-url origin git@github.com:apolo176/BashProject.git
-    	echo "Debug "
-	# Hacer commit y push
+
+	echo "Debug"
+
+	# Añade todos los cambios, pide mensaje de commit, y hace push
 	git add .
 	read -p "Introduce el mensaje del commit: " commit_msg
 	git commit -m "$commit_msg"
-    	echo "Intentando subir tus cambios..."
-	# Para configurar la rama upstream y hacer el push en la rama main
+
+	echo "Intentando subir tus cambios..."
 	git push -u origin main
+
 	if [ $? -eq 0 ]; then
 		echo "El repositorio se ha actualizado correctamente."
 	else
