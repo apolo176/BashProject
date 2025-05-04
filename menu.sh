@@ -2,45 +2,45 @@
 #Prueba
 function empaquetaycomprimeFicherosProyecto()
 {
-  cd /home/$USER/formulariocitas
-  tar cvzf  /home/$USER/formulariocitas.tar.gz app.py script.sql  .env requirements.txt templates/*
+	cd /home/$USER/formulariocitas
+	tar cvzf  /home/$USER/formulariocitas.tar.gz app.py script.sql  .env requirements.txt templates/*
 }
 function eliminarMySQL()
 {
-#Para el servicio
-sudo systemctl stop mysql.service
-#Elimina los paquetes +ficheros de configuración + datos
-sudo apt purge mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-*
-#servidor MySQL se desinstale completamente sin dejar archivos de residuos.
-sudo apt autoremove
-#Limpia la cache
-sudo apt autoclean
-#Para cerciorarnos de que queda todo limpio:
-#Eliminar los directorios de datos de MySQL:
-sudo rm -rf /var/lib/mysql
-#Eliminar los archivos de configuración de MySQL:
-sudo rm -rf /etc/mysql/
-#Eliminar los logs
-sudo rm -rf /var/log/mysql
+	#Para el servicio
+	sudo systemctl stop mysql.service
+	#Elimina los paquetes +ficheros de configuración + datos
+	sudo apt purge mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-*
+	#servidor MySQL se desinstale completamente sin dejar archivos de residuos.
+	sudo apt autoremove
+	#Limpia la cache
+	sudo apt autoclean
+	#Para cerciorarnos de que queda todo limpio:
+	#Eliminar los directorios de datos de MySQL:
+	sudo rm -rf /var/lib/mysql
+	#Eliminar los archivos de configuración de MySQL:
+	sudo rm -rf /etc/mysql/
+	#Eliminar los logs
+	sudo rm -rf /var/log/mysql
 }
 
 function crearNuevaUbicacion()
 {
-    if [ -d /var/www/formulariocitas ]
-    then
-        echo -e "Borrando el contenido del direcctorio...\n"
-        sudo rm -rf /var/www/formulariocitas
-    fi
-    echo "Creando directorio..."
-    sudo mkdir -p /var/www/formulariocitas
-    echo "Cambiando permisos del directorio..."
-    sudo chown -R $USER:$USER /var/www/formulariocitas
-    echo ""
-    read -p "PULSA ENTER PARA CONTINUAR..."
+	if [ -d /var/www/formulariocitas ]
+	then
+		echo -e "Borrando el contenido del direcctorio...\n"
+		sudo rm -rf /var/www/formulariocitas
+	fi
+	echo "Creando directorio..."
+	sudo mkdir -p /var/www/formulariocitas
+	echo "Cambiando permisos del directorio..."
+	sudo chown -R $USER:$USER /var/www/formulariocitas
+	echo ""
+	read -p "PULSA ENTER PARA CONTINUAR..."
 }
 function copiarFicherosProyectoNuevaUbicacion()
 {
-    tar -xf /home/$USER/formulariocitas.tar.gz -C /var/www/formulariocitas
+	tar -xf /home/$USER/formulariocitas.tar.gz -C /var/www/formulariocitas
 }
 function instalarMySQL()
 {
@@ -90,11 +90,11 @@ function ejecutarEntornoVirtual()
 
 function instalarLibreriasEntornoVirtual()
 {
-    cd /var/www/formulariocitas
-    source venv/bin/activate
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    #kepa activa y desactiva todo el rato
+	cd /var/www/formulariocitas
+	source venv/bin/activate
+	python -m pip install --upgrade pip
+	pip install -r requirements.txt
+	#kepa activa y desactiva todo el rato
 }
 
 
@@ -127,8 +127,7 @@ function arrancarNGINX()
 #todo no reconoce !dpkg
 function testearPuertosNGINX()
 { 
-	if !dpkg -s | grep net-tools/etc/nginx/conf.d/;
-	then
+	if !dpkg -s | grep net-tools/etc/nginx/conf.d/;then
 		sudo apt install net-tools
 	fi
 	sudo netstat -anp | grep nginx
@@ -337,23 +336,23 @@ function controlarIntentosConexionSSH()
 }
 
 function clonarProyectoGitHub() {
-    token="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"
-    repo_url="https://$token@github.com/apolo176/BashProject.git"
-    read -p "Introduce el directorio destino (ruta absoluta): " destino
-    if [ -d "$destino/.git" ]; then
-        echo "El directorio ya contiene un repositorio Git. Ejecutando git pull..."
-        cd "$destino"
-        git pull origin main
-    else
-        echo "El directorio no existe o no es un repositorio. Clonando..."
-        mkdir -p "$destino"
-        git clone "$repo_url" "$destino"
-    fi
-    if [ $? -eq 0 ]; then
-        echo "Operación realizada exitosamente en $destino."
-    else
-        echo "Error al realizar la operación. Revisa la URL, los permisos y la configuración."
-    fi
+	token="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"
+	repo_url="https://$token@github.com/apolo176/BashProject.git"
+	read -p "Introduce el directorio destino (ruta absoluta): " destino
+	if [ -d "$destino/.git" ]; then
+        	echo "El directorio ya contiene un repositorio Git. Ejecutando git pull..."
+		cd "$destino"
+        	git pull origin main
+    	else
+        	echo "El directorio no existe o no es un repositorio. Clonando..."
+        	mkdir -p "$destino"
+        	git clone "$repo_url" "$destino"
+    	fi
+    	if [ $? -eq 0 ]; then
+        	echo "Operación realizada exitosamente en $destino."
+    	else
+        	echo "Error al realizar la operación. Revisa la URL, los permisos y la configuración."
+    	fi
 }
 
 function actualizarProyectoGitHub() {
@@ -398,79 +397,74 @@ function actualizarProyectoGitHub() {
 }
 function salirMenu()
 {
-echo "Fin del Programa"
+	echo "Fin del Programa"
 }
 ### Main ###
 opcionmenuppal=0
 while test $opcionmenuppal -ne 26
 do
-    #Muestra el menu
-    echo -e "0 Empaqueta y comprime los ficheros clave del proyecto\n"
-    echo -e "1 Eliminar la instalación de mysql\n"
-    echo -e "2 Crea la nueva ubicación \n"
-    echo -e "3 Copiar ficheros en la nueva ubicación\n"
-    echo -e "4 Instalar MySQL\n"
-    echo -e "5 Crear usuario en la base de datos\n"
-    echo -e "6 Crear base de datos\n"
-    echo -e "7 Ejecutar entorno virtual\n"
-    echo -e "8 Instalar librerías entorno virtual\n"
-    echo -e "9 Ejecutar el servicio\n"
-    echo -e "10 Instalar NGINX\n"
-    echo -e "11 Arrancar servicio web\n"
-    echo -e "12 Testear puertos NGINX\n"
-    echo -e "13 Abrir en navegador\n"
-    echo -e "14 Personalizar index\n"
-    echo -e "15 Instalar Gunicorn\n"
-    echo -e "16 Configurar Gunicorn\n"
-    echo -e "17 Establecer propiedad y permisos\n"
-    echo -e "18 Crear servicio systemd para formulario citas\n"
-    echo -e "19 Configurar NGINX\n"
-    echo -e "20 Cargar nuevos cambios de la configuración de NGINX\n"
-    echo -e "21 Arrancar NGINX\n"
-    echo -e "22 Testear virtual host\n"
-    echo -e "23 Ver errores de NGINX\n"
-    echo -e "24 Copiar servidor remoto\n"
-    echo -e "25 Controlar intentos de conexión de SSH\n"
-    echo -e "26 salir del Menu \n"
-    echo -e "27 Descargar el proyecto de github\n"
-    echo -e "28 Actualizar el proyecto en github\n"
+    	#Muestra el menu
+	echo -e "0 Empaqueta y comprime los ficheros clave del proyecto\n"
+	echo -e "1 Eliminar la instalación de mysql\n"
+	echo -e "2 Crea la nueva ubicación \n"
+	echo -e "3 Copiar ficheros en la nueva ubicación\n"
+	echo -e "4 Instalar MySQL\n"
+	echo -e "5 Crear usuario en la base de datos\n"
+	echo -e "6 Crear base de datos\n"
+	echo -e "7 Ejecutar entorno virtual\n"
+	echo -e "8 Instalar librerías entorno virtual\n"
+	echo -e "9 Ejecutar el servicio\n"
+	echo -e "10 Instalar NGINX\n"
+	echo -e "11 Arrancar servicio web\n"
+	echo -e "12 Testear puertos NGINX\n"
+	echo -e "13 Abrir en navegador\n"
+	echo -e "14 Personalizar index\n"
+	echo -e "15 Instalar Gunicorn\n"
+	echo -e "16 Configurar Gunicorn\n"
+	echo -e "17 Establecer propiedad y permisos\n"
+	echo -e "18 Crear servicio systemd para formulario citas\n"
+	echo -e "19 Configurar NGINX\n"
+	echo -e "20 Cargar nuevos cambios de la configuración de NGINX\n"
+	echo -e "21 Arrancar NGINX\n"
+	echo -e "22 Testear virtual host\n"
+	echo -e "23 Ver errores de NGINX\n"
+	echo -e "24 Copiar servidor remoto\n"
+	echo -e "25 Controlar intentos de conexión de SSH\n"
+	echo -e "26 salir del Menu \n"
+	echo -e "27 Descargar el proyecto de github\n"
+	echo -e "28 Actualizar el proyecto en github\n"
     	read -p "Elige una opcion:" opcionmenuppal
-    case $opcionmenuppal in
-        	0) empaquetaycomprimeFicherosProyecto;;
-        	1) eliminarMySQL;;
-   	 2) crearNuevaUbicacion;;
-   	 3) copiarFicherosProyectoNuevaUbicacion;;
-   	 4) instalarMySQL;;
-   	 5) crearusuariobasesdedatos;;
-   	 6) crearbasededatos;;
-	7) ejecutarEntornoVirtual;;
-	8) instalarLibreriasEntornoVirtual;;
-	9) probandotodoconservidordedesarrollodeflask;;
-	10) instalarNGINX;;
-	11) arrancarNGINX;;
-	12) testearPuertosNGINX;;
-	13) visualizarIndex;;
-	14) personalizarIndex;;
-	15) instalarGunicorn;;
-	16) configurarGunicorn;;
-	17) pasarPropiedadyPermisos;;
-	18) crearServicioSystemdFormularioCitas;;
-	19) configurarNginxProxyInverso;;
-	20) cargarFicherosConfiguracionNginx;;
-	21) rearrancarNginx;;
-	22) testearVirtualHost;;
- 	23) verNginxLogs;;
-	24) copiarServidorRemoto;;
-	25) controlarIntentosConexionSSH;;
-   	26) salirMenu;;
-   	27) clonarProyectoGitHub ;;
-   	28) actualizarProyectoGitHub ;;
-   	 *) ;;
-    esac
+    	case $opcionmenuppal in
+		0) empaquetaycomprimeFicherosProyecto;;
+		1) eliminarMySQL;;
+		2) crearNuevaUbicacion;;
+		3) copiarFicherosProyectoNuevaUbicacion;;
+		4) instalarMySQL;;
+		5) crearusuariobasesdedatos;;
+		6) crearbasededatos;;
+		7) ejecutarEntornoVirtual;;
+		8) instalarLibreriasEntornoVirtual;;
+		9) probandotodoconservidordedesarrollodeflask;;
+		10) instalarNGINX;;
+		11) arrancarNGINX;;
+		12) testearPuertosNGINX;;
+		13) visualizarIndex;;
+		14) personalizarIndex;;
+		15) instalarGunicorn;;
+		16) configurarGunicorn;;
+		17) pasarPropiedadyPermisos;;
+		18) crearServicioSystemdFormularioCitas;;
+		19) configurarNginxProxyInverso;;
+		20) cargarFicherosConfiguracionNginx;;
+		21) rearrancarNginx;;
+		22) testearVirtualHost;;
+		23) verNginxLogs;;
+		24) copiarServidorRemoto;;
+		25) controlarIntentosConexionSSH;;
+		26) salirMenu;;
+		27) clonarProyectoGitHub ;;
+		28) actualizarProyectoGitHub ;;
+		*) ;;
+    	esac
 done
 exit 0
-
-
-
-
-echo -e "Prueba"
