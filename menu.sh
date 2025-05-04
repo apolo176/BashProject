@@ -206,7 +206,7 @@ function configurarGunicorn()
 	cd /var/www/formulariocitas
 	source venv/bin/activate
 	GunicornFile="wsgi.py"
-	t:=ouch "$GunicornFile"
+	touch "$GunicornFile"
 	echo "from app import app">wsgi.py
 	echo "if __name__=='__main__':" >> wsgi.py
 	echo "	app.run()" >> wsgi.py
@@ -334,7 +334,7 @@ function copiarServidorRemoto()
 	read ip
 
 	# Copia los archivos necesarios al servidor remoto usando scp
-	scp menu.sh &USER@&ip:/home/$USER/formulariocitas
+	scp menu.sh $USER@$ip:/home/$USER/formulariocitas
 	scp formulariocitas.tar.gz $USER@$ip:/home/$USER/formulariocitas
 
 	# Conecta al servidor remoto por SSH y ejecuta el script
