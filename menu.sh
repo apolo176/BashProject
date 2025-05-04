@@ -334,8 +334,7 @@ function copiarServidorRemoto()
 	read ip
 
 	# Copia los archivos necesarios al servidor remoto usando scp
-	# ⚠️ Las variables &USER y &ip deberían corregirse a $USER y $ip
-	scp menu.sh $USER@$ip:/home/$USER/formulariocitas
+	scp menu.sh &USER@&ip:/home/$USER/formulariocitas
 	scp formulariocitas.tar.gz $USER@$ip:/home/$USER/formulariocitas
 
 	# Conecta al servidor remoto por SSH y ejecuta el script
@@ -368,7 +367,7 @@ function controlarIntentosConexionSSH()
 
 function clonarProyectoGitHub() {
 	# Clona un repositorio privado desde GitHub usando un token de acceso personal (PAT)
-	token="github_pat_..."
+	token="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"
 	repo_url="https://$token@github.com/apolo176/BashProject.git"
 
 	# Solicita la ruta de destino
@@ -396,7 +395,7 @@ function clonarProyectoGitHub() {
 
 function actualizarProyectoGitHub() {
 	# Actualiza el repositorio subiendo cambios a GitHub
-	token="github_pat_..."
+	token="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"
 	echo "Introduce esto cuando pida la contraseña $token"
 
 	proyecto="/home/$USER/formulariocitas"
@@ -409,6 +408,18 @@ function actualizarProyectoGitHub() {
 
 	cd "$proyecto"
 
+	# Preguntar al usuario por su nombre y correo
+ 	#echo "Por favor, introduce tu nombre para el commit:"
+ 	#read -p "Nombre: " nombre
+ 	#echo "Por favor, introduce tu correo para el commit:"
+ 	#read -p "Correo: " correo
+ 
+ 	# Configurar la identidad en Git para este repositorio
+ 	#git config user.name "$nombre"
+ 	#git config user.email "$correo"
+ 	#git config --global credential.helper store
+ 	#echo "https://$token@github.com" > ~/.git-credentials
+ 
 	# Configura el origen del repositorio para usar SSH (se espera que tengas una clave configurada)
 	git remote set-url origin git@github.com:apolo176/BashProject.git
 
