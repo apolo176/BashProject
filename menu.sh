@@ -290,7 +290,7 @@ function rearrancarNginx()
 function testearVirtualHost()
 { 
 	echo "🔎 Vamos a testear el servicio"
-	echo "⚠️ En unos segundos se te redigira al navegador"
+	echo "⚠️ En unos segundos se te redigirá al navegador"
 	sleep 3
  	firefox http://127.0.0.1:8080
 }
@@ -328,10 +328,10 @@ function controlarIntentosConexionSSH()
 	    cat "$LOG"
 	fi
 	done | grep "sshd" | grep -E "Failed password|Accepted password" | while read -r LINE; do
-	DATE=$(echo "$LINE" | awk '{print $1, $2, $3}')
-	STATUS=$(echo "$LINE" | grep -q "Failed password" && echo "fail" || echo "accept")
-	USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
-	echo "\"Status: [$STATUS] Account name: $USER Date: $DATE\""
+		DATE=$(echo "$LINE" | awk '{print $1, $2, $3}')
+		STATUS=$(echo "$LINE" | grep -q "Failed password" && echo "fail" || echo "accept")
+		USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
+		echo "\"Status: [$STATUS] Account name: $USER Date: $DATE\""
 	done
 }
 
