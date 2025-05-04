@@ -35,6 +35,7 @@ function crearNuevaUbicacion()
 	sudo mkdir -p /var/www/formulariocitas
 	echo "Cambiando permisos del directorio..."
 	sudo chown -R $USER:$USER /var/www/formulariocitas
+ 	echo ""
 	read -p "PULSA ENTER PARA CONTINUAR..."
 }
 
@@ -103,7 +104,7 @@ function instalarLibreriasEntornoVirtual()
 	source venv/bin/activate
 	python -m pip install --upgrade pip
 	pip install -r requirements.txt
-	# kepa activa y desactiva todo el rato (comentario poco claro, puede eliminarse o aclararse)
+	# kepa activa y desactiva todo el rato 
 }
 
 function probandotodoconservidordedesarrollodeflask()
@@ -213,17 +214,18 @@ function configurarGunicorn()
 	firefox localhost:5000
 }
 
-#todo comprobaciones etc...
 function pasarPropiedadyPermisos()
 { 
+	# Cambia la propiedad y los permisos de los archivos del proyecto a 'www-data'
+	# Esto es necesario para que el servidor web NGINX pueda acceder a los archivos
 	sudo chown -R www-data:www-data /var/www/formulariocitas
 	echo "La propiedad ha sido transferida al <usuario:grupo>: <www-data:www-data>."
-	
 }
 
-#todo comprobaciones etc...
 function crearServicioSystemdFormularioCitas()
 { 
+	# Crea un servicio systemd para gestionar la aplicación Flask con Gunicorn
+	# Configura el servicio para que se ejecute como 'www-data' y se reinicie automáticamente
 	echo "Creando servicio systemd para formulario de citas..."
 	cat <<EOF | sudo tee /etc/systemd/system/formulariocitas.service > /dev/null
 	[Unit]
@@ -241,6 +243,7 @@ function crearServicioSystemdFormularioCitas()
 	[Install]
 	WantedBy=multi-user.target
 EOF
+	# Recarga el daemon de systemd, habilita el servicio para que se inicie automáticamente y lo arranca
 	sudo systemctl daemon-reload
 	echo "Servicio creado en /etc/systemd/system/formulariocitas.service "
 	sudo systemctl enable formulariocitas
@@ -248,21 +251,23 @@ EOF
 	echo "Verificando estado del servicio..."
 	sleep 1  # Pequeña pausa para dar tiempo al servicio a arrancar
 
+	# Verifica si el servicio está activo y muestra el resultado
 	if systemctl is-active --quiet formulariocitas; then
         	echo "✅ El servicio 'formulariocitas' se ha creado y está activo."
 	else
 		echo "❌ El servicio 'formulariocitas' no está activo. Revisa los logs con:"
 		echo "   sudo journalctl -u formulariocitas -e"
 	fi
-
 }
 
 function configurarNginxProxyInverso()
 { 
+	# Configura NGINX como proxy inverso para redirigir tráfico desde el puerto 3128 hacia el puerto 5000 (donde Gunicorn sirve Flask)
 	local conf_path="/etc/nginx/conf.d/formulariocitas.conf"
 	if [ -f "$conf_path" ]; then
 		echo "⚠️  El archivo $conf_path ya existe. No se ha hecho ninguna modificación."
 	else
+		# Si no existe el archivo de configuración, lo crea con los parámetros adecuados
 		echo "Creando configuración de Nginx para formulario de citas..."
 		sudo tee "$conf_path" > /dev/null <<EOF
 		server {
@@ -278,36 +283,36 @@ EOF
 		echo "Recargando Nginx..."
 		sudo nginx -t && sudo systemctl reload nginx
 	fi
+	# Verifica si la configuración de NGINX es válida y recarga el servicio si es necesario
 	echo "🔎 Comprobando sintaxis de la configuración de Nginx..."
 	if sudo nginx -t; then
 		echo "✅ Sintaxis válida. Puede recargar Nginx con la opción 20"
-
 	else
 		echo "❌ Error en la configuración de Nginx. No se ha recargado el servicio."
 		echo "   Revisa los mensajes anteriores para más detalles."
-
-
 	fi
-
 }
 
 function cargarFicherosConfiguracionNginx()
 {
+	# Recarga la configuración de NGINX para aplicar los cambios realizados en los archivos de configuración
 	sudo systemctl reload nginx
 	echo "⚙️ Nginx recargado correctamente con la nueva configuración."
-
 }
 
 function rearrancarNginx()
 { 
+	# Reinicia el servicio de NGINX para aplicar cambios en la configuración
 	sudo systemctl restart nginx
 	echo "🚀 Nginx reiniciado correctamente."
 }
 
 function testearVirtualHost()
 { 
+	# Realiza una prueba para verificar que el servicio esté funcionando correctamente
+	# Redirige al navegador para comprobar que se pueda acceder a la aplicación
 	echo "🔎 Vamos a testear el servicio"
-	echo "⚠️ En unos segundos se te redigirá al navegador"
+	echo "⚠️ En unos segundos se te redirigirá al navegador"
 	sleep 3
  	firefox http://127.0.0.1:8080
 }
