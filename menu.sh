@@ -9,6 +9,7 @@ function empaquetaycomprimeFicherosProyecto() {
 	else
 		echo "❌ Fallo al crear el archivo tar.gz."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function eliminarMySQL()
@@ -43,6 +44,7 @@ function eliminarMySQL()
 	else
 		echo "❌ Error al eliminar datos de MySQL."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function crearNuevaUbicacion()
@@ -82,6 +84,7 @@ function copiarFicherosProyectoNuevaUbicacion()
 	else
 		echo "❌ Fallo al extraer ficheros."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function instalarMySQL()
@@ -92,22 +95,24 @@ function instalarMySQL()
 		echo "ℹ️  MySQL ya está instalado."
 	else
 		echo "⬇️  Instalando MySQL..."
-		sudo apt update > /dev/null 2>&1 && \
-		sudo apt install -y mysql-server > /dev/null 2>&1
+		sudo apt update
+		sudo apt install -y mysql-server
 		if [ $? -eq 0 ]; then
 			echo "✅ MySQL instalado."
+			echo "▶️  Iniciando MySQL si no está activo..."
+			sudo systemctl start mysql.service > /dev/null 2>&1
+			if systemctl is-active --quiet mysql.service; then
+				echo "✅ Servicio MySQL en marcha."
+			else
+				echo "❌ No se pudo iniciar MySQL."
+			fi
 		else
 			echo "❌ Fallo al instalar MySQL."
 		fi
 	fi
 
-	echo "▶️  Iniciando MySQL si no está activo..."
-	sudo systemctl start mysql.service > /dev/null 2>&1
-	if systemctl is-active --quiet mysql.service; then
-		echo "✅ Servicio MySQL en marcha."
-	else
-		echo "❌ No se pudo iniciar MySQL."
-	fi
+	
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function crearusuariobasesdedatos()
@@ -130,7 +135,7 @@ function crearusuariobasesdedatos()
 		GRANT CREATE, ALTER, DROP, INSERT, UPDATE, INDEX, DELETE, SELECT,
 		    REFERENCES, RELOAD ON *.* TO 'lsi'@'localhost' WITH GRANT OPTION;
 		FLUSH PRIVILEGES;
-	EOF
+EOF
 	if [ $? -eq 0 ]; then
 		echo "✅ Script SQL rellenado."
 	else
@@ -145,6 +150,7 @@ function crearusuariobasesdedatos()
 	else
 		echo "❌ Fallo al ejecutar el script SQL."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function crearbasededatos()
@@ -159,6 +165,7 @@ function crearbasededatos()
 	else
 		echo "❌ Error al ejecutar $script."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function ejecutarEntornoVirtual()
@@ -192,6 +199,7 @@ function ejecutarEntornoVirtual()
 	else
 		echo "❌ Error al activar entorno virtual."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function instalarLibreriasEntornoVirtual()
@@ -207,6 +215,7 @@ function instalarLibreriasEntornoVirtual()
 	else
 		echo "❌ Error al instalar librerías."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function probandotodoconservidordedesarrollodeflask()
@@ -219,10 +228,12 @@ function probandotodoconservidordedesarrollodeflask()
 	if ps -p $PID > /dev/null 2>&1; then
 		echo "✅ Servidor Flask corriendo (PID $PID)."
 		echo "   CTRL+C para detener."
+		firefox http://localhost > /dev/null 2>&1 &
 		wait $PID
 	else
 		echo "❌ No se pudo iniciar el servidor Flask."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function instalarNGINX()
@@ -241,19 +252,20 @@ function instalarNGINX()
 			return
 		fi
 	fi
-
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function arrancarNGINX()
 {
 	# Verifica si el servicio NGINX está en ejecución, y si no, lo inicia
 	echo "🔄 Arrancando NGINX..."
-	sudo systemctl start nginx.service > /dev/null 2>&1
+	sudo systemctl start nginx.service
 	if systemctl is-active --quiet nginx.service; then
 		echo "✅ Servicio NGINX en marcha."
 	else
 		echo "❌ No se pudo iniciar NGINX."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function testearPuertosNGINX()
@@ -275,49 +287,187 @@ function testearPuertosNGINX()
 
 	echo "🔄 Listando puertos abiertos por NGINX..."
 	sudo netstat -anp 2>/dev/null | grep nginx && echo "✅ Puertos mostrados." || echo "❌ No se encontraron puertos nginx."
-}
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function visualizarIndex()
 { 
 	# Abre el navegador Firefox en la URL local del servidor NGINX (localhost)
-	echo "🔄 Abriendo index en Firefox..."
-	firefox http://localhost > /dev/null 2>&1 &
+	echo "🔄 Abriendo index en Firefox... (Se recomienda Chromium)"
+	firefox http://127.0.0.1 > /dev/null 2>&1 &
 	if [ $? -eq 0 ]; then
 		echo "✅ Firefox abierto en http://localhost"
 	else
 		echo "❌ No se pudo abrir Firefox."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function personalizarIndex()
 { 
 	# Personaliza el archivo index.html de NGINX con contenido HTML básico
-	# Este contenido incluye una tabla con el nombre del grupo y algunos detalles
+	sudo rm /var/www/html/index.html
 	local file="/var/www/html/index.html"
 	echo "🔄 Personalizando index.html..."
-	sudo tee "$file" > /dev/null <<EOF
+	sudo tee "$file" > /dev/null << EOF
 	<!DOCTYPE html>
-	<html>
+	<html lang="en">
 	<head>
-	    <title>NOMBRE DEL GRUPO</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>Grupo E.D.U. - Portfolio</title>
+		<style>
+			:root {
+				--bg: #2c2c2c;
+				--fg: #e0e0e0;
+				--card-bg: #383838;
+				--transition: 0.3s ease;
+				--github-color: #181717;
+				--github-hover: #333;
+			}
+
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			html, body {
+				height: 100%;
+			}
+
+			body {
+				background: var(--bg);
+				color: var(--fg);
+				font-family: 'Segoe UI', sans-serif;
+				overflow-x: hidden;
+				display: flex;
+				flex-direction: column;
+			}
+
+			header {
+				text-align: center;
+				padding: 2rem 1rem;
+			}
+
+			header h1 {
+				font-size: 2.5rem;
+				letter-spacing: 2px;
+			}
+
+			header p {
+				margin-top: 0.5rem;
+				color: #aaa;
+			}
+
+			.container {
+				flex: 1;
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 2rem;
+				padding: 2rem;
+			}
+
+			.card {
+				background: var(--card-bg);
+				border-radius: 8px;
+				padding: 1.5rem;
+				transition: transform var(--transition), box-shadow var(--transition);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				height: 220px;
+			}
+
+			.card:hover {
+				transform: translateY(-8px);
+				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+			}
+
+			.card h3 {
+				text-align: center;
+				font-size: 1.5rem;
+				margin-bottom: 0.5rem;
+			}
+
+			.card p {
+				text-align: center;
+				font-size: 0.9rem;
+				color: #aaa;
+			}
+
+			footer {
+				text-align: center;
+				padding: 1rem;
+				background-color: var(--bg);
+			}
+
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				padding: 0.6rem;
+				background: var(--github-color);
+				color: #fff;
+				border-radius: 50%;
+				transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+				box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+				text-decoration: none;
+			}
+
+			.btn:hover {
+				background: var(--github-hover);
+				box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+				transform: scale(1.05);
+			}
+
+			svg {
+				fill: currentColor;
+			}
+		</style>
 	</head>
 	<body>
-	<center><h1>NOMBRE DEL GRUPO</h1></center>
-	<table border="5" bordercolor="red" align="center">
-	    <tr><th colspan="3">NOMBRE DEL GRUPO</th></tr>
-	    <tr><th>Nombre</th><th>Apellidos</th><th>Foto</th></tr>
-	    <tr><td>Kepa</td><td>Bengoetxea Kortazar</td><td border="3" height="100" width="100">Photo1</td></tr>
-	</table>
-	<center>El cabeza de grupo es Kepa Bengoetxea</center>
+		<header>
+			<h1>Grupo E.D.U.</h1>
+			<p>Bash Project - Directed by Prof. KEPA XABIER BENGOETXEA KORTAZAR</p>
+		</header>
+
+		<section class="container">
+			<div class="card">
+				<h3>Eneko Rodriguez</h3>
+				<p>Developer</p>
+			</div>
+			<div class="card">
+				<h3>Urko Horas</h3>
+				<p>Developer</p>
+			</div>
+			<div class="card">
+				<h3>Diego Pomares</h3>
+				<p>Developer</p>
+			</div>
+			<div class="card">
+				<h3>Eder Torres</h3>
+				<p>Engineer</p>
+			</div>
+		</section>
+
+		<footer>
+			<a href="https://github.com/apolo176/BashProject" class="btn" target="_blank">
+			  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+			    <path d="M12 .3a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2.17c-3.34.73-4.04-1.61-4.04-1.61-.55-1.4-1.34-1.77-1.34-1.77-1.1-.76.08-.75.08-.75 1.22.09 1.86 1.25 1.86 1.25 1.08 1.85 2.83 1.31 3.52 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.25-3.22-.13-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.65.25 2.87.12 3.17.78.84 1.25 1.91 1.25 3.22 0 4.62-2.8 5.64-5.48 5.94.43.38.81 1.11.81 2.24v3.33c0 .32.21.7.82.58A12 12 0 0 0 12 .3"/>
+			  </svg>
+			</a>
+		</footer>
 	</body>
 	</html>
-	EOF
+EOF
 	if [ $? -eq 0 ]; then
 		echo "✅ index.html personalizado."
 	else
 		echo "❌ Error al personalizar index.html."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function instalarGunicorn()
@@ -332,6 +482,7 @@ function instalarGunicorn()
 	else
 		echo "❌ Error al instalar Gunicorn."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function configurarGunicorn()
@@ -348,7 +499,7 @@ function configurarGunicorn()
 	from app import app
 	if __name__=='__main__':
 		app.run()
-	EOF
+EOF
 	if [ $? -eq 0 ]; then
 		echo "✅ Archivo wsgi.py creado."
 	else
@@ -372,6 +523,7 @@ function configurarGunicorn()
 	else
 		echo "❌ Gunicorn no ha arrancado."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function pasarPropiedadyPermisos()
@@ -385,6 +537,7 @@ function pasarPropiedadyPermisos()
 	else
 		echo "❌ Error al cambiar propiedad/permiso."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function crearServicioSystemdFormularioCitas()
@@ -418,11 +571,12 @@ EOF
 
 	# Verifica si el servicio está activo y muestra el resultado
 	if systemctl is-active --quiet formulariocitas; then
-        	echo "✅ El servicio 'formulariocitas' se ha creado y está activo."
+        	echo "✅ El servicio 'formulariocitas' se ha creaEOFdo y está activo."
 	else
 		echo "❌ El servicio 'formulariocitas' no está activo. Revisa los logs con:"
 		echo "   sudo journalctl -u formulariocitas -e"
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function configurarNginxProxyInverso()
@@ -456,6 +610,7 @@ EOF
 		echo "❌ Error en la configuración de Nginx. No se ha recargado el servicio."
 		echo "   Revisa los mensajes anteriores para más detalles."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function cargarFicherosConfiguracionNginx()
@@ -463,6 +618,7 @@ function cargarFicherosConfiguracionNginx()
 	# Recarga la configuración de NGINX para aplicar los cambios realizados en los archivos de configuración
 	sudo systemctl reload nginx
 	echo "⚙️ Nginx recargado correctamente con la nueva configuración."
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function rearrancarNginx()
@@ -470,6 +626,7 @@ function rearrancarNginx()
 	# Reinicia el servicio de NGINX para aplicar cambios en la configuración
 	sudo systemctl restart nginx
 	echo "🚀 Nginx reiniciado correctamente."
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function testearVirtualHost()
@@ -490,6 +647,7 @@ function testearVirtualHost()
 	else
 		echo "❌ No se pudo abrir Firefox."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 function verNginxLogs()
 { 
@@ -500,6 +658,7 @@ function verNginxLogs()
 	else
 		echo "❌ No se pudieron mostrar los logs."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function copiarServidorRemoto()
@@ -527,6 +686,7 @@ function copiarServidorRemoto()
 	echo "▶️  Conectando por SSH a $ip..."
 	ssh "$USER@$ip"
 	bash -x menu.sh
+	
 }
 
 function controlarIntentosConexionSSH()
@@ -551,6 +711,7 @@ function controlarIntentosConexionSSH()
 		USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
 		echo "🔔 Status: [$STATUS] Account name: $USER Date: $DATE\""
 	done
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function clonarProyectoGitHub() {
@@ -579,6 +740,7 @@ function clonarProyectoGitHub() {
 	else
 		echo "Error al realizar la operación. Revisa la URL, los permisos y la configuración."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function actualizarProyectoGitHub() {
@@ -626,6 +788,7 @@ function actualizarProyectoGitHub() {
 	else
 		echo "Error al actualizar el repositorio. Revisa tu conexión y credenciales."
 	fi
+	read -p "Pulsa ENTER para continuar..."
 }
 function salirMenu()
 {
