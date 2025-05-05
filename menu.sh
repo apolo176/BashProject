@@ -1,225 +1,390 @@
 #!/usr/bin/bash
 #Prueba
-function empaquetaycomprimeFicherosProyecto()
-{
+function empaquetaycomprimeFicherosProyecto() {
 	# Navega al directorio del proyecto y crea un archivo tar.gz con los ficheros esenciales
-	cd /home/$USER/formulariocitas
-	tar cvzf  /home/$USER/formulariocitas.tar.gz app.py script.sql  .env requirements.txt templates/*
+	echo "🔄 Empaquetando y comprimiendo ficheros del proyecto..."
+	cd /home/$USER/formulariocitas > /dev/null 2>&1
+	if tar czf /home/$USER/formulariocitas.tar.gz app.py script.sql .env requirements.txt templates/* > /dev/null 2>&1; then
+		echo "✅ Archivo formulariocitas.tar.gz creado correctamente."
+	else
+		echo "❌ Fallo al crear el archivo tar.gz."
+	fi
 }
 
 function eliminarMySQL()
 {
 	# Detiene el servicio MySQL
-	sudo systemctl stop mysql.service
+	echo "🔄 Deteniendo servicio MySQL..."
+	sudo systemctl stop mysql.service > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ MySQL detenido."
+	else
+		echo "❌ No se pudo detener MySQL."
+	fi
 	# Elimina completamente MySQL y sus configuraciones
-	sudo apt purge mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-*
+	echo "🗑️  Purge de paquetes MySQL..."
+	sudo apt purge -y mysql-server mysql-client mysql-common mysql-server-core-* mysql-client-core-* > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Paquetes MySQL purgados."
+	else
+		echo "❌ Error al purgar paquetes MySQL."
+	fi
+
 	# Elimina dependencias no necesarias
-	sudo apt autoremove
-	# Limpia la caché de paquetes
-	sudo apt autoclean
+	echo "🧹 Eliminando dependencias y caché..."
+	sudo apt autoremove -y > /dev/null 2>&1
+	sudo apt autoclean -y > /dev/null 2>&1
+	echo "✅ Dependencias innecesarias y caché eliminadas."
 	# Elimina los datos, configuraciones y logs de MySQL para una limpieza completa
-	sudo rm -rf /var/lib/mysql
-	sudo rm -rf /etc/mysql/
-	sudo rm -rf /var/log/mysql
+	echo "🚮 Eliminando datos y configuraciones..."
+	sudo rm -rf /var/lib/mysql /etc/mysql /var/log/mysql > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Datos de MySQL eliminados."
+	else
+		echo "❌ Error al eliminar datos de MySQL."
+	fi
 }
 
 function crearNuevaUbicacion()
 {
 	# Crea una nueva ubicación para el proyecto, borrando la existente si ya está
-	if [ -d /var/www/formulariocitas ]
-	then
-		echo -e "Borrando el contenido del direcctorio...\n"
-		sudo rm -rf /var/www/formulariocitas
+	echo "🔄 Reconfigurando /var/www/formulariocitas..."
+	if [ -d /var/www/formulariocitas ]; then
+		echo "🗑️  Borrando directorio existente..."
+		sudo rm -rf /var/www/formulariocitas > /dev/null 2>&1
+		echo "✅ Directorio anterior eliminado."
 	fi
-	echo "Creando directorio..."
-	sudo mkdir -p /var/www/formulariocitas
-	echo "Cambiando permisos del directorio..."
-	sudo chown -R $USER:$USER /var/www/formulariocitas
- 	echo ""
-	read -p "PULSA ENTER PARA CONTINUAR..."
+	echo "📁 Creando directorio..."
+	sudo mkdir -p /var/www/formulariocitas > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Directorio creado."
+	else
+		echo "❌ Error al crear directorio."
+	fi
+
+	echo "🔧 Ajustando permisos..."
+	sudo chown -R $USER:$USER /var/www/formulariocitas > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Permisos asignados a $USER."
+	else
+		echo "❌ No se pudieron cambiar permisos."
+	fi
+
+	read -p "Pulsa ENTER para continuar..."
 }
 
 function copiarFicherosProyectoNuevaUbicacion()
 {
 	# Extrae los ficheros del proyecto en la nueva ubicación
-	tar -xf /home/$USER/formulariocitas.tar.gz -C /var/www/formulariocitas
+	echo "🔄 Extrayendo ficheros en /var/www/formulariocitas..."
+	if tar xf /home/$USER/formulariocitas.tar.gz -C /var/www/formulariocitas > /dev/null 2>&1; then
+		echo "✅ Ficheros extraídos correctamente."
+	else
+		echo "❌ Fallo al extraer ficheros."
+	fi
 }
 
 function instalarMySQL()
 {
 	# Verifica si MySQL está instalado y lo inicia si no está corriendo; si no está instalado, lo instala
-	if dpkg -l | grep -q mysql-server;
-	then
-		echo "MySQL ya está instalado"
-		if ! systemctl status mysql.service > /dev/null 2>&1;
-		then
-			sudo systemctl start mysql.service
-		fi	
-		return
+	echo "🔄 Comprobando instalación de MySQL..."
+	if dpkg -l | grep -q mysql-server; then
+		echo "ℹ️  MySQL ya está instalado."
+	else
+		echo "⬇️  Instalando MySQL..."
+		sudo apt update > /dev/null 2>&1 && \
+		sudo apt install -y mysql-server > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			echo "✅ MySQL instalado."
+		else
+			echo "❌ Fallo al instalar MySQL."
+		fi
 	fi
-	sudo apt update
-	sudo apt install mysql-server
-	if ! systemctl status mysql.service > /dev/null 2>&1;
-	then
-		sudo systemctl start mysql.service
+
+	echo "▶️  Iniciando MySQL si no está activo..."
+	sudo systemctl start mysql.service > /dev/null 2>&1
+	if systemctl is-active --quiet mysql.service; then
+		echo "✅ Servicio MySQL en marcha."
+	else
+		echo "❌ No se pudo iniciar MySQL."
 	fi
 }
 
 function crearusuariobasesdedatos()
 {
 	# Crea un script SQL para crear el usuario 'lsi' con permisos amplios y lo ejecuta en MySQL
-	sqlScript="crear_usuario.sql"
-	touch "/home/$USER/formulariocitas/$sqlScript"
-	echo "CREATE USER 'lsi'@'localhost' IDENTIFIED BY 'lsi';" >> "$sqlScript"
-	echo "GRANT CREATE, ALTER, DROP, INSERT, UPDATE, INDEX, DELETE, SELECT,
-	REFERENCES, RELOAD ON *.* TO 'lsi'@'localhost' WITH GRANT OPTION;" >>"$sqlScript"
-  	echo "FLUSH PRIVILEGES;" >> "$sqlScript"
-  	echo "El script se ha creado correctamente"
-  	sudo mysql < /home/$USER/formulariocitas/crear_usuario.sql 
-  	return
+	local sqlScript="/home/$USER/formulariocitas/crear_usuario.sql"
+
+	echo "🔄 Generando script SQL de usuario..."
+	touch "$sqlScript" > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Archivo $sqlScript creado."
+	else
+		echo "❌ No se pudo crear $sqlScript."
+		return
+	fi
+
+	echo "🔄 Escribiendo comandos en el script..."
+	cat <<EOF > "$sqlScript"
+		CREATE USER 'lsi'@'localhost' IDENTIFIED BY 'lsi';
+		GRANT CREATE, ALTER, DROP, INSERT, UPDATE, INDEX, DELETE, SELECT,
+		    REFERENCES, RELOAD ON *.* TO 'lsi'@'localhost' WITH GRANT OPTION;
+		FLUSH PRIVILEGES;
+	EOF
+	if [ $? -eq 0 ]; then
+		echo "✅ Script SQL rellenado."
+	else
+		echo "❌ Error al escribir en $sqlScript."
+		return
+	fi
+
+	echo "▶️  Ejecutando script en MySQL..."
+	sudo mysql < "$sqlScript" > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Usuario 'lsi' creado y permisos asignados."
+	else
+		echo "❌ Fallo al ejecutar el script SQL."
+	fi
 }
 
 function crearbasededatos()
 {
 	# Ejecuta un script SQL con la cuenta del usuario 'lsi' para crear y configurar la base de datos
-	mysql -u lsi -p < /home/$USER/formulariocitas/script.sql 
-	return
+	local script="/home/$USER/formulariocitas/script.sql"
+	
+	echo "🔄 Ejecutando script de creación de base de datos..."
+	mysql -u lsi -p < "$script" > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Base de datos configurada correctamente."
+	else
+		echo "❌ Error al ejecutar $script."
+	fi
 }
 
 function ejecutarEntornoVirtual()
 {
 	# Instala dependencias necesarias y crea un entorno virtual Python en el proyecto
-	sudo apt update
-	sudo apt -y upgrade
-	sudo apt install -y python3-venv python3-dev build-essential libssl-dev libffi-dev python3-setuptools python3-pip
-	cd /var/www/formulariocitas
-	python3 -m venv venv
+	echo "🔄 Preparando entorno virtual..."
+	sudo apt update > /dev/null 2>&1
+	sudo apt -y upgrade > /dev/null 2>&1
+	sudo apt install -y python3-venv python3-dev build-essential libssl-dev libffi-dev python3-setuptools python3-pip > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Dependencias instaladas."
+	else
+		echo "❌ Error al instalar dependencias."
+		return
+	fi
+
+	cd /var/www/formulariocitas > /dev/null 2>&1
+	echo "🔄 Creando entorno virtual venv..."
+	python3 -m venv venv > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Entorno virtual creado."
+	else
+		echo "❌ Error al crear entorno virtual."
+		return
+	fi
+
+	echo "▶️  Activando entorno virtual..."
 	source venv/bin/activate
+	if [ $? -eq 0 ]; then
+		echo "✅ Entorno virtual activado."
+	else
+		echo "❌ Error al activar entorno virtual."
+	fi
 }
 
 function instalarLibreriasEntornoVirtual()
 {
 	# Activa el entorno virtual e instala las librerías requeridas del proyecto
-	cd /var/www/formulariocitas
-	source venv/bin/activate
-	python -m pip install --upgrade pip
-	pip install -r requirements.txt
-	# kepa activa y desactiva todo el rato 
+	echo "🔄 Instalando librerías en el entorno virtual..."
+	cd /var/www/formulariocitas > /dev/null 2>&1
+	source venv/bin/activate > /dev/null 2>&1
+	python -m pip install --upgrade pip > /dev/null 2>&1
+	pip install -r requirements.txt > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Librerías instaladas correctamente."
+	else
+		echo "❌ Error al instalar librerías."
+	fi
 }
 
 function probandotodoconservidordedesarrollodeflask()
 {
 	# Ejecuta la aplicación Flask en modo desarrollo
-	python3 /home/$USER/formulariocitas/app.py
+	echo "🔄 Iniciando servidor de desarrollo Flask..."
+	python3 /home/$USER/formulariocitas/app.py > /dev/null 2>&1 &
+	PID=$!
+	sleep 1
+	if ps -p $PID > /dev/null 2>&1; then
+		echo "✅ Servidor Flask corriendo (PID $PID)."
+		echo "   CTRL+C para detener."
+		wait $PID
+	else
+		echo "❌ No se pudo iniciar el servidor Flask."
+	fi
 }
 
 function instalarNGINX()
 {
 	# Verifica si NGINX está instalado, y si no lo está, lo instala
-	if dpkg -s | grep nginx;
-	then
-		echo "NGINX ya está instalado"
-		return	
+		echo "🔄 Instalando NGINX..."
+	if dpkg -s nginx > /dev/null 2>&1; then
+		echo "ℹ️  NGINX ya estaba instalado."
+	else
+		sudo apt update > /dev/null 2>&1
+		sudo apt install -y nginx > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			echo "✅ NGINX instalado correctamente."
+		else
+			echo "❌ Error al instalar NGINX."
+			return
+		fi
 	fi
-	sudo apt update
-	sudo apt install nginx
+
 }
 
 function arrancarNGINX()
 {
 	# Verifica si el servicio NGINX está en ejecución, y si no, lo inicia
-	if  systemctl status nginx.service > /dev/null 2>&1;
-	then
-		echo "El servicio está en marcha"
-		return
+	echo "🔄 Arrancando NGINX..."
+	sudo systemctl start nginx.service > /dev/null 2>&1
+	if systemctl is-active --quiet nginx.service; then
+		echo "✅ Servicio NGINX en marcha."
+	else
+		echo "❌ No se pudo iniciar NGINX."
 	fi
-	sudo systemctl start nginx.service
 }
 
 function testearPuertosNGINX()
 { 
 	# Verifica si 'net-tools' está instalado y lo instala si no está presente
 	# Luego, muestra el estado de los puertos abiertos por NGINX
-	if !dpkg -s | grep net-tools/etc/nginx/conf.d/;then
-		sudo apt install net-tools
+	echo "🔄 Comprobando net-tools..."
+	if ! dpkg -s net-tools > /dev/null 2>&1; then
+		sudo apt install -y net-tools > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			echo "✅ net-tools instalado."
+		else
+			echo "❌ Error al instalar net-tools."
+			return
+		fi
+	else
+		echo "ℹ️  net-tools ya instalado."
 	fi
-	sudo netstat -anp | grep nginx
+
+	echo "🔄 Listando puertos abiertos por NGINX..."
+	sudo netstat -anp 2>/dev/null | grep nginx && echo "✅ Puertos mostrados." || echo "❌ No se encontraron puertos nginx."
+}
 }
 
 function visualizarIndex()
 { 
 	# Abre el navegador Firefox en la URL local del servidor NGINX (localhost)
-	firefox http://localhost
+	echo "🔄 Abriendo index en Firefox..."
+	firefox http://localhost > /dev/null 2>&1 &
+	if [ $? -eq 0 ]; then
+		echo "✅ Firefox abierto en http://localhost"
+	else
+		echo "❌ No se pudo abrir Firefox."
+	fi
 }
 
 function personalizarIndex()
 { 
 	# Personaliza el archivo index.html de NGINX con contenido HTML básico
 	# Este contenido incluye una tabla con el nombre del grupo y algunos detalles
-	sudo > /var/www/html/index.nginx-debian.html
-	sudo mv /var/www/html/index.nginx-debian.html /var/www/html/index.html
-	sudo echo '<!DOCTYPE html>' > /var/www/html/index.html
-	sudo echo '  <html>' >> /var/www/html/index.html
-	sudo echo '  <head>' >> /var/www/html/index.html
-	sudo echo '<title>NOMBRE DEL GRUPO</title>' >> /var/www/html/index.html
-	sudo echo ' </head>' >> /var/www/html/index.html
-	sudo echo ' <body>' >> /var/www/html/index.html
-	sudo echo '<center>' >> /var/www/html/index.html
-	sudo echo '    <h1>NOMBRE DEL GRUPO</h1>' >> /var/www/html/index.html
-	sudo echo '</center>' >> /var/www/html/index.html
-	sudo echo '' >> /var/www/html/index.html
-	sudo echo '<table border="5" bordercolor="red" align="center">' >> /var/www/html/index.html
-	sudo echo '    <tr>' >> /var/www/html/index.html
-	sudo echo '        <th colspan="3">NOMBRE DEL GRUPO</th>' >> /var/www/html/index.html
-	sudo echo '    </tr>' >> /var/www/html/index.html
-	sudo echo '    <tr>' >> /var/www/html/index.html
-	sudo echo '        <th>Nombre</th>' >> /var/www/html/index.html
-	sudo echo '        <th>Apellidos</th>' >> /var/www/html/index.html
-	sudo echo '        <th>Foto</th>' >> /var/www/html/index.html
-	sudo echo '    </tr>' >> /var/www/html/index.html
-	sudo echo '     <tr>' >> /var/www/html/index.html
-	sudo echo '        <td>Kepa</td>' >> /var/www/html/index.html
-	sudo echo '        <td>Bengoetxea Kortazar</td>' >> /var/www/html/index.html
-	sudo echo '        <td border=3 height=100 width=100>Photo1</td>' >> /var/www/html/index.html
-	sudo echo '    </tr>' >> /var/www/html/index.html
-	sudo echo '</table>' >> /var/www/html/index.html
-	sudo echo '<center>' >> /var/www/html/index.html
-	sudo echo '    El cabeza de grupo es Kepa Bengoetxea' >> /var/www/html/index.html
-	sudo echo '</center>' >> /var/www/html/index.html
-	sudo echo '  </body>' >> /var/www/html/index.html
-	sudo echo '  </html>' >> /var/www/html/index.html	
+	local file="/var/www/html/index.html"
+	echo "🔄 Personalizando index.html..."
+	sudo tee "$file" > /dev/null <<EOF
+	<!DOCTYPE html>
+	<html>
+	<head>
+	    <title>NOMBRE DEL GRUPO</title>
+	</head>
+	<body>
+	<center><h1>NOMBRE DEL GRUPO</h1></center>
+	<table border="5" bordercolor="red" align="center">
+	    <tr><th colspan="3">NOMBRE DEL GRUPO</th></tr>
+	    <tr><th>Nombre</th><th>Apellidos</th><th>Foto</th></tr>
+	    <tr><td>Kepa</td><td>Bengoetxea Kortazar</td><td border="3" height="100" width="100">Photo1</td></tr>
+	</table>
+	<center>El cabeza de grupo es Kepa Bengoetxea</center>
+	</body>
+	</html>
+	EOF
+	if [ $? -eq 0 ]; then
+		echo "✅ index.html personalizado."
+	else
+		echo "❌ Error al personalizar index.html."
+	fi
 }
 
 function instalarGunicorn()
 { 
 	# Activa el entorno virtual y instala Gunicorn para servir la aplicación Flask
-	cd /var/www/formulariocitas
-	source venv/bin/activate
-	pip install gunicorn
-	# Comprobación de si Gunicorn está instalado usando pip
+	echo "🔄 Instalando Gunicorn..."
+	cd /var/www/formulariocitas > /dev/null 2>&1
+	source venv/bin/activate > /dev/null 2>&1
+	pip install --upgrade pip gunicorn > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Gunicorn instalado en el entorno virtual."
+	else
+		echo "❌ Error al instalar Gunicorn."
+	fi
 }
 
 function configurarGunicorn()
 { 
 	# Configura Gunicorn creando el archivo wsgi.py para lanzar la aplicación Flask
 	# Luego, ejecuta Gunicorn en el puerto 5000 y abre Firefox en localhost
-	cd /var/www/formulariocitas
-	source venv/bin/activate
-	GunicornFile="wsgi.py"
-	touch "$GunicornFile"
-	echo "from app import app">wsgi.py
-	echo "if __name__=='__main__':" >> wsgi.py
-	echo "	app.run()" >> wsgi.py
-	gunicorn --bind localhost:5000 wsgi:app &
-	firefox localhost:5000
+	echo "🔄 Configurando Gunicorn service..."
+	cd /var/www/formulariocitas > /dev/null 2>&1
+	source venv/bin/activate > /dev/null 2>&1
+
+	local wsgi="wsgi.py"
+	touch "$wsgi" > /dev/null 2>&1
+	cat <<EOF > "$wsgi"
+	from app import app
+	if __name__=='__main__':
+		app.run()
+	EOF
+	if [ $? -eq 0 ]; then
+		echo "✅ Archivo wsgi.py creado."
+	else
+		echo "❌ Error al crear wsgi.py."
+		return
+	fi
+
+	echo "▶️  Iniciando Gunicorn..."
+	gunicorn --bind localhost:5000 wsgi:app > /dev/null 2>&1 &
+	sleep 1
+	pgrep -f "gunicorn: master" > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Gunicorn corriendo en localhost:5000."
+		read -p "¿Quieres abrir el navegador en http://localhost:5000? [s/N]: " resp
+		if [[ "$resp" =~ ^[sS]$ ]]; then
+			firefox http://localhost:5000 > /dev/null 2>&1 &
+			echo "✅ Firefox abierto en http://localhost:5000"
+		else
+			echo "ℹ️  No se abrió el navegador."
+		fi
+	else
+		echo "❌ Gunicorn no ha arrancado."
+	fi
 }
 
 function pasarPropiedadyPermisos()
 { 
 	# Cambia la propiedad y los permisos de los archivos del proyecto a 'www-data'
 	# Esto es necesario para que el servidor web NGINX pueda acceder a los archivos
-	sudo chown -R www-data:www-data /var/www/formulariocitas
-	echo "La propiedad ha sido transferida al <usuario:grupo>: <www-data:www-data>."
+	echo "🔄 Ajustando propiedad y permisos a www-data..."
+	sudo chown -R www-data:www-data /var/www/formulariocitas > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Propiedad transferida a www-data:www-data."
+	else
+		echo "❌ Error al cambiar propiedad/permiso."
+	fi
 }
 
 function crearServicioSystemdFormularioCitas()
@@ -311,41 +476,64 @@ function testearVirtualHost()
 { 
 	# Realiza una prueba para verificar que el servicio esté funcionando correctamente
 	# Redirige al navegador para comprobar que se pueda acceder a la aplicación
-	echo "🔎 Vamos a testear el servicio"
-	echo "⚠️ En unos segundos se te redirigirá al navegador"
-	sleep 3
- 	firefox http://127.0.0.1:8080
+	echo "🔄 Comprobando puerto 8080..."
+	if sudo lsof -i :8080 -t > /dev/null; then
+		echo "⚠️  Puerto 8080 ocupado, liberando..."
+		sudo kill -9 $(sudo lsof -i :8080 -t) > /dev/null 2>&1
+		echo "✅ Puerto 8080 liberado."
+	fi
+
+	echo "🔄 Iniciando prueba en http://127.0.0.1:8080..."
+	firefox http://127.0.0.1:8080 > /dev/null 2>&1 &
+	if [ $? -eq 0 ]; then
+		echo "✅ Firefox abierto en http://127.0.0.1:8080"
+	else
+		echo "❌ No se pudo abrir Firefox."
+	fi
 }
 function verNginxLogs()
 { 
 	# Muestra las últimas 10 líneas del archivo de errores de NGINX
-	tail -10 /var/log/nginx/error.log
+		echo "🔄 Mostrando últimos errores de Nginx..."
+	if tail -10 /var/log/nginx/error.log; then
+		echo "✅ Logs mostrados."
+	else
+		echo "❌ No se pudieron mostrar los logs."
+	fi
 }
 
 function copiarServidorRemoto()
 { 
 	# Instala y habilita el servicio SSH para permitir conexiones remotas
-	sudo apt install openssh-service
-	sudo systemctl enable ssh
-	sudo systemctl start ssh
+	echo "🔄 Instalando SSH si hace falta..."
+	sudo apt install -y openssh-server > /dev/null 2>&1
+	sudo systemctl enable ssh > /dev/null 2>&1
+	sudo systemctl start ssh > /dev/null 2>&1
+	echo "✅ SSH listo."
 
-	# Solicita la IP del servidor remoto
-	echo "Introduce la IP del servidor remoto"
+	echo "🔄 Introduce IP del servidor remoto:"
 	read ip
 
-	# Copia los archivos necesarios al servidor remoto usando scp
-	scp menu.sh $USER@$ip:/home/$USER/formulariocitas
-	scp formulariocitas.tar.gz $USER@$ip:/home/$USER/formulariocitas
+	echo "🔄 Copiando ficheros a $ip..."
+	scp menu.sh "$USER@$ip:/home/$USER/formulariocitas" > /dev/null 2>&1
+	scp formulariocitas.tar.gz "$USER@$ip:/home/$USER/formulariocitas" > /dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		echo "✅ Ficheros copiados."
+	else
+		echo "❌ Error al copiar ficheros."
+		return
+	fi
 
-	# Conecta al servidor remoto por SSH y ejecuta el script
-	ssh $USER@$ip
+	echo "▶️  Conectando por SSH a $ip..."
+	ssh "$USER@$ip"
 	bash -x menu.sh
 }
 
 function controlarIntentosConexionSSH()
 {
 	# Analiza los logs de autenticación para detectar intentos de conexión SSH exitosos o fallidos
-	echo "Analizando logs de intentos de conexión SSH..."
+	echo "🔄 Analizando intentos de conexión SSH..."
+
 
 	# Lista los archivos auth.log, incluyendo comprimidos
 	LOGS=$(ls /var/log/auth.log* 2>/dev/null)
@@ -361,7 +549,7 @@ function controlarIntentosConexionSSH()
 		DATE=$(echo "$LINE" | awk '{print $1, $2, $3}')
 		STATUS=$(echo "$LINE" | grep -q "Failed password" && echo "fail" || echo "accept")
 		USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
-		echo "\"Status: [$STATUS] Account name: $USER Date: $DATE\""
+		echo "🔔 Status: [$STATUS] Account name: $USER Date: $DATE\""
 	done
 }
 
