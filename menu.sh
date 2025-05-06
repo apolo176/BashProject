@@ -259,7 +259,11 @@ function arrancarNGINX()
 {
 	# Verifica si el servicio NGINX está en ejecución, y si no, lo inicia
 	echo "🔄 Arrancando NGINX..."
-	sudo kill -9 $(sudo lsof -i :80 -t)
+	if sudo lsof -i :80 -t > /dev/null; then
+		echo "⚠️  Puerto 80 ocupado, liberando..."
+		sudo kill -9 $(sudo lsof -i :80 -t) > /dev/null 2>&1
+		echo "✅ Puerto 80 liberado."
+	fi
 	sudo systemctl start nginx.service
 	if systemctl is-active --quiet nginx.service; then
 		echo "✅ Servicio NGINX en marcha."
@@ -449,7 +453,7 @@ function personalizarIndex()
 			</div>
 			<div class="card">
 				<h3>Eder Torres</h3>
-				<p>Engineer</p>
+				<p>Developer</p>
 			</div>
 		</section>
 
@@ -495,24 +499,29 @@ function configurarGunicorn()
 	source venv/bin/activate > /dev/null 2>&1
 
 	local wsgi="wsgi.py"
-	touch "$wsgi" > /dev/null 2>&1
-	cat <<EOF > "$wsgi"
+	sudo tee "$wsgi" > /dev/null <<EOF
 from app import app
-if __name__=='__main__':
-	app.run()
+if __name__ == '__main__':
+    app.run()
 EOF
 	if [ $? -eq 0 ]; then
 		echo "✅ Archivo wsgi.py creado."
 	else
 		echo "❌ Error al crear wsgi.py."
-		return
+		read -p "Pulsa ENTER para continuar..."
 	fi
-
 	echo "▶️  Iniciando Gunicorn..."
-	sudo kill -9 $(sudo lsof -i :5000 -t) > /dev/null 2>&1 
-	echo "Pulsa CTRL+C para terminar gunicorn o abre el navegador con la direccion 127.0.0.1:5000"
-	gunicorn --bind 127.0.0.1:5000 wsgi:app
-	echo "💀 Gunicorn terminado."
+	echo "🔄 Comprobando puerto 5000..."
+	if sudo lsof -i :5000 -t > /dev/null; then
+		echo "⚠️  Puerto 5000 ocupado, liberando..."
+		sudo kill -9 $(sudo lsof -i :5000 -t) > /dev/null 2>&1
+		echo "✅ Puerto 5000 liberado."
+	fi
+	echo "Pulsa CTRL+C para terminar gunicorn"
+	gunicorn --bind 127.0.0.1:5000 wsgi:app & > /dev/null 2>&1
+	echo "Abriendo Firefox."
+	firefox 127.0.0.1:5000 
+	echo "💀 Gunicorn fue terminado"
 	read -p "Pulsa ENTER para continuar..."
 }
 
@@ -675,7 +684,6 @@ function copiarServidorRemoto()
 	echo "▶️  Conectando por SSH a $ip... (El Script debe estar DENTRO de formulariocitas/)"
 	ssh "$USER@$ip" 'cd ~/formulariocitas && bash -x menu.sh'
 	read -p "Pulsa ENTER para continuar..."
-	
 }
 
 function controlarIntentosConexionSSH()
@@ -740,20 +748,7 @@ function actualizarProyectoGitHub() {
 		echo "La ruta proporcionada no parece ser un repositorio Git."
 		return
 	fi
-
 	cd "$proyecto"
-
-	# Preguntar al usuario por su nombre y correo
- 	#echo "Por favor, introduce tu nombre para el commit:"
- 	#read -p "Nombre: " nombre
- 	#echo "Por favor, introduce tu correo para el commit:"
- 	#read -p "Correo: " correo
- 
- 	# Configurar la identidad en Git para este repositorio
- 	#git config user.name "$nombre"
- 	#git config user.email "$correo"
- 	#git config --global credential.helper store
- 	#echo "https://$token@github.com" > ~/.git-credentials
  
 	# Configura el origen del repositorio para usar SSH (se espera que tengas una clave configurada)
 	git remote set-url origin git@github.com:apolo176/BashProject.git
