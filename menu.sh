@@ -259,6 +259,7 @@ function arrancarNGINX()
 {
 	# Verifica si el servicio NGINX está en ejecución, y si no, lo inicia
 	echo "🔄 Arrancando NGINX..."
+	sudo kill -9 $(sudo lsof -i :80 -t)
 	sudo systemctl start nginx.service
 	if systemctl is-active --quiet nginx.service; then
 		echo "✅ Servicio NGINX en marcha."
@@ -496,9 +497,9 @@ function configurarGunicorn()
 	local wsgi="wsgi.py"
 	touch "$wsgi" > /dev/null 2>&1
 	cat <<EOF > "$wsgi"
-	from app import app
-	if __name__=='__main__':
-		app.run()
+from app import app
+if __name__=='__main__':
+	app.run()
 EOF
 	if [ $? -eq 0 ]; then
 		echo "✅ Archivo wsgi.py creado."
@@ -508,21 +509,10 @@ EOF
 	fi
 
 	echo "▶️  Iniciando Gunicorn..."
-	gunicorn --bind localhost:5000 wsgi:app > /dev/null 2>&1 &
-	sleep 1
-	pgrep -f "gunicorn: master" > /dev/null 2>&1
-	if [ $? -eq 0 ]; then
-		echo "✅ Gunicorn corriendo en localhost:5000."
-		read -p "¿Quieres abrir el navegador en http://localhost:5000? [s/N]: " resp
-		if [[ "$resp" =~ ^[sS]$ ]]; then
-			firefox http://localhost:5000 > /dev/null 2>&1 &
-			echo "✅ Firefox abierto en http://localhost:5000"
-		else
-			echo "ℹ️  No se abrió el navegador."
-		fi
-	else
-		echo "❌ Gunicorn no ha arrancado."
-	fi
+	sudo kill -9 $(sudo lsof -i :5000 -t) > /dev/null 2>&1 
+	echo "Pulsa CTRL+C para terminar gunicorn o abre el navegador con la direccion 127.0.0.1:5000"
+	gunicorn --bind 127.0.0.1:5000 wsgi:app
+	echo "💀 Gunicorn terminado."
 	read -p "Pulsa ENTER para continuar..."
 }
 
@@ -571,7 +561,7 @@ EOF
 
 	# Verifica si el servicio está activo y muestra el resultado
 	if systemctl is-active --quiet formulariocitas; then
-        	echo "✅ El servicio 'formulariocitas' se ha creaEOFdo y está activo."
+        	echo "✅ El servicio 'formulariocitas' se ha creado y está activo."
 	else
 		echo "❌ El servicio 'formulariocitas' no está activo. Revisa los logs con:"
 		echo "   sudo journalctl -u formulariocitas -e"
@@ -633,17 +623,17 @@ function testearVirtualHost()
 { 
 	# Realiza una prueba para verificar que el servicio esté funcionando correctamente
 	# Redirige al navegador para comprobar que se pueda acceder a la aplicación
-	echo "🔄 Comprobando puerto 8080..."
-	if sudo lsof -i :8080 -t > /dev/null; then
-		echo "⚠️  Puerto 8080 ocupado, liberando..."
-		sudo kill -9 $(sudo lsof -i :8080 -t) > /dev/null 2>&1
-		echo "✅ Puerto 8080 liberado."
+	echo "🔄 Comprobando puerto 80..."
+	if sudo lsof -i :80 -t > /dev/null; then
+		echo "⚠️  Puerto 80 ocupado, liberando..."
+		sudo kill -9 $(sudo lsof -i :80 -t) > /dev/null 2>&1
+		echo "✅ Puerto 80 liberado."
 	fi
 
-	echo "🔄 Iniciando prueba en http://127.0.0.1:8080..."
-	firefox http://127.0.0.1:8080 > /dev/null 2>&1 &
+	echo "🔄 Iniciando prueba en http://127.0.0.1:80..."
+	firefox http://127.0.0.1:80 > /dev/null 2>&1 &
 	if [ $? -eq 0 ]; then
-		echo "✅ Firefox abierto en http://127.0.0.1:8080"
+		echo "✅ Firefox abierto en http://127.0.0.1:80"
 	else
 		echo "❌ No se pudo abrir Firefox."
 	fi
@@ -674,8 +664,7 @@ function copiarServidorRemoto()
 	read ip
 
 	echo "🔄 Copiando ficheros a $ip..."
-	scp menu.sh "$USER@$ip:/home/$USER/formulariocitas" > /dev/null 2>&1
-	scp formulariocitas.tar.gz "$USER@$ip:/home/$USER/formulariocitas" > /dev/null 2>&1
+	scp menu.sh formulariocitas.tar.gz "$USER@$ip:/home/$USER/formulariocitas" 
 	if [ $? -eq 0 ]; then
 		echo "✅ Ficheros copiados."
 	else
@@ -683,9 +672,9 @@ function copiarServidorRemoto()
 		return
 	fi
 
-	echo "▶️  Conectando por SSH a $ip..."
-	ssh "$USER@$ip"
-	bash -x menu.sh
+	echo "▶️  Conectando por SSH a $ip... (El Script debe estar DENTRO de formulariocitas/)"
+	ssh "$USER@$ip" 'cd ~/formulariocitas && bash -x menu.sh'
+	read -p "Pulsa ENTER para continuar..."
 	
 }
 
@@ -693,8 +682,6 @@ function controlarIntentosConexionSSH()
 {
 	# Analiza los logs de autenticación para detectar intentos de conexión SSH exitosos o fallidos
 	echo "🔄 Analizando intentos de conexión SSH..."
-
-
 	# Lista los archivos auth.log, incluyendo comprimidos
 	LOGS=$(ls /var/log/auth.log* 2>/dev/null)
 
@@ -720,7 +707,7 @@ function clonarProyectoGitHub() {
 	repo_url="https://$token@github.com/apolo176/BashProject.git"
 
 	# Solicita la ruta de destino
-	read -p "Introduce el directorio destino (ruta absoluta): " destino
+	destino=/home/$USER/formulariocitas
 
 	if [ -d "$destino/.git" ]; then
 		# Si ya es un repositorio, hace pull
@@ -746,8 +733,6 @@ function clonarProyectoGitHub() {
 function actualizarProyectoGitHub() {
 	# Actualiza el repositorio subiendo cambios a GitHub
 	token="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"
-	echo "Introduce esto cuando pida la contraseña $token"
-
 	proyecto="/home/$USER/formulariocitas"
 
 	# Verifica si es un repositorio Git válido
