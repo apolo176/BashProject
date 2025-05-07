@@ -239,7 +239,7 @@ function probandotodoconservidordedesarrollodeflask()
 function instalarNGINX()
 {
 	# Verifica si NGINX está instalado, y si no lo está, lo instala
-		echo "🔄 Instalando NGINX..."
+	echo "🔄 Instalando NGINX..."
 	if dpkg -s nginx > /dev/null 2>&1; then
 		echo "ℹ️  NGINX ya estaba instalado."
 	else
@@ -704,7 +704,7 @@ function controlarIntentosConexionSSH()
 		DATE=$(echo "$LINE" | awk '{print $1, $2, $3}')
 		STATUS=$(echo "$LINE" | grep -q "Failed password" && echo "fail" || echo "accept")
 		USER=$(echo "$LINE" | awk '{for(i=1;i<=NF;i++) if($i=="for") print $(i+1)}')
-		echo "🔔 Status: [$STATUS] Account name: $USER Date: $DATE\""
+		echo "🔔 Estado: [$STATUS] Nombre: $USER Fecha: $DATE\""
 	done
 	read -p "Pulsa ENTER para continuar..."
 }
